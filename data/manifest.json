@@ -1,6 +1,6 @@
 {
-  "title": "Простой просмотрщик исторических слоёв",
-  "version": "4-simple-projection-standardized",
+  "title": "Историческая административная сетка Западной Сибири",
+  "version": "5.0-top-atd-display",
   "projectBounds": [
     55.17824915611141,
     49.333494966359574,
@@ -33,7 +33,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_032",
@@ -52,7 +60,15 @@
         65.09500790004508
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Остроги XVII века",
+      "categoryLabel": "Остроги / пункты",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_033",
@@ -71,7 +87,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_034",
@@ -90,7 +114,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_035",
@@ -109,7 +141,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_036",
@@ -128,7 +168,15 @@
         65.09500790004508
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Остроги XVII века",
+      "categoryLabel": "Остроги / пункты",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_037",
@@ -147,7 +195,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_038",
@@ -166,7 +222,15 @@
         65.76765934907151
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "Буферы острогов XVII века",
+      "categoryLabel": "Буферы острогов",
+      "topAtdValues": [
+        "Остроги и пункты XVII века"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_039",
@@ -185,7 +249,15 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "XVII век — уездная сеть Сибири",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Уездная сеть Сибири"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_029",
@@ -204,7 +276,15 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1700 — уезды Сибири",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Уездная сеть Сибири"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_028",
@@ -223,7 +303,18 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 3
+      "uncertainCount": 3,
+      "displayTitle": "1719 — Сибирская губерния: провинции и уезды",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Сибирская губерния",
+        "Соль-Камская провинция",
+        "Тобольская провинция",
+        "Хлыновская провинция"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_027",
@@ -242,7 +333,20 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 3
+      "uncertainCount": 3,
+      "displayTitle": "1724 — Сибирская губерния: провинции и уезды",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Вятская провинция",
+        "Енисейская провинция",
+        "Иркутская провинция",
+        "Сибирская губерния",
+        "Соль-Камская провинция",
+        "Тобольская провинция"
+      ],
+      "topAtdCount": 6,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_024",
@@ -261,7 +365,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 1
+      "uncertainCount": 1,
+      "displayTitle": "1725 — Сибирская губерния: уездные границы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Енисейская провинция",
+        "Иркутская провинция",
+        "Тобольская провинция"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_023",
@@ -280,7 +394,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 1
+      "uncertainCount": 1,
+      "displayTitle": "1726 — Сибирская губерния: провинции и уезды",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Енисейская провинция",
+        "Иркутская провинция",
+        "Тобольская провинция"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_025",
@@ -299,7 +423,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 1
+      "uncertainCount": 1,
+      "displayTitle": "1726 — переходная территория Юга Сибири",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Енисейская провинция",
+        "Иркутская провинция",
+        "Тобольская провинция"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_026",
@@ -318,7 +452,18 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 3
+      "uncertainCount": 3,
+      "displayTitle": "1727 — Сибирская губерния: провинции и уезды",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Енисейская провинция",
+        "Иркутская провинция",
+        "Сибирская губерния",
+        "Тобольская провинция"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_030",
@@ -337,7 +482,15 @@
         55.88989583358129
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1735–1750 — Колывано-Воскресенское горное ведомство",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Колывано-Воскресенское горное ведомство"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_022",
@@ -356,7 +509,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 2
+      "uncertainCount": 2,
+      "displayTitle": "1745 — уездные границы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Зона неустойчивого контроля",
+        "Зона спорной принадлежности",
+        "Сибирская губерния"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_021",
@@ -375,7 +538,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 2
+      "uncertainCount": 2,
+      "displayTitle": "1765 — уездные границы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Зона спорной принадлежности",
+        "Исетская провинция",
+        "Сибирская губерния"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_020",
@@ -394,7 +567,15 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 4
+      "uncertainCount": 4,
+      "displayTitle": "1780–1782 — Колыванская область",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Колыванская область"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_019",
@@ -413,7 +594,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1782–1797 — Тобольское наместничество и Колыванская область",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Колыванская область",
+        "Колыванское наместничество",
+        "Тобольское наместничество"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_018",
@@ -432,7 +623,15 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 2
+      "uncertainCount": 2,
+      "displayTitle": "1798 — Тобольская губерния",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Тобольская губерния"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_017",
@@ -451,7 +650,18 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 6
+      "uncertainCount": 6,
+      "displayTitle": "1805 — Тобольская и Томская губернии",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Неясная принадлежность границ",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_015",
@@ -470,7 +680,17 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1809 — губернская и уездная сеть",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_016",
@@ -489,7 +709,16 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1809 — уточнённая версия уездной сети",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 2,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_014",
@@ -508,7 +737,18 @@
         77.7191495517343
       ],
       "projectionMode": "4326",
-      "uncertainCount": 6
+      "uncertainCount": 6,
+      "displayTitle": "1821 — Тобольская и Томская губернии",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Неясная принадлежность границ",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_013",
@@ -527,7 +767,18 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1838 — Тобольская, Томская и Омская области",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Омская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_012",
@@ -546,7 +797,17 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1848 — Тобольская и Томская губернии",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_011",
@@ -565,7 +826,19 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1855 — губернии и области Западной Сибири",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан",
+        "Область Сибирских Киргизов",
+        "Семипалатинская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 5,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_010",
@@ -584,7 +857,19 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1876 — губернии и области Западной Сибири",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Акмолинская область",
+        "Верхний уровень не указан",
+        "Семипалатинская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 5,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_007",
@@ -603,7 +888,18 @@
         63.92305896038085
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1897 — статистика населения",
+      "categoryLabel": "Статистика населения",
+      "topAtdValues": [
+        "Акмолинская область",
+        "Семипалатинская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 4,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_008",
@@ -622,7 +918,19 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1897 — границы с населением",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Акмолинская область",
+        "Верхний уровень не указан",
+        "Семипалатинская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 5,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_009",
@@ -641,7 +949,15 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1897 — административные границы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_004",
@@ -660,7 +976,15 @@
         63.92305896038085
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1914 — статистика населения",
+      "categoryLabel": "Статистика населения",
+      "topAtdValues": [
+        "Статистический слой"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_005",
@@ -679,7 +1003,15 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1914 — административные границы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Верхний уровень не указан"
+      ],
+      "topAtdCount": 1,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_006",
@@ -698,7 +1030,19 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1914 — границы с населением",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Акмолинская область",
+        "Верхний уровень не указан",
+        "Семипалатинская область",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 5,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_003",
@@ -717,7 +1061,17 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 1
+      "uncertainCount": 1,
+      "displayTitle": "1918 — Алтайская губерния и смежные территории",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Алтайская губерния",
+        "Тобольская губерния",
+        "Томская губерния"
+      ],
+      "topAtdCount": 3,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_002",
@@ -736,7 +1090,21 @@
         73.47780397140039
       ],
       "projectionMode": "4326",
-      "uncertainCount": 3
+      "uncertainCount": 3,
+      "displayTitle": "1923 — губернии, автономная область и уезды",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Алтайская губерния",
+        "Губернии и автономные области",
+        "Ново-Николаевская губерния",
+        "Ойратская АО",
+        "Омская губерния",
+        "Томская губерния",
+        "Тюменская губерния"
+      ],
+      "topAtdCount": 7,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     },
     {
       "id": "layer_001",
@@ -755,7 +1123,29 @@
         73.51955462623623
       ],
       "projectionMode": "4326",
-      "uncertainCount": 0
+      "uncertainCount": 0,
+      "displayTitle": "1930 — округа и районы",
+      "categoryLabel": "Административные границы",
+      "topAtdValues": [
+        "Ачинский округ",
+        "Барнаульский округ",
+        "Бийский округ",
+        "Ишимский округ",
+        "Каинский округ",
+        "Каменский округ",
+        "Новосибирский округ",
+        "Ойратская АО",
+        "Омский округ",
+        "Рубцовский округ",
+        "Славгородский округ",
+        "Тобольский округ",
+        "Томский округ",
+        "Тюменский округ",
+        "Щегловский округ"
+      ],
+      "topAtdCount": 15,
+      "displayField": "_display_name",
+      "topAtdField": "_display_top_atd"
     }
   ],
   "categories": {
@@ -764,5 +1154,17 @@
     "settlements": "Остроги/пункты",
     "buffer": "Буферы",
     "points": "Точки"
+  },
+  "defaultMode": "top",
+  "fieldLabels": {
+    "_display_name": "Объект",
+    "_display_top_atd": "Верхний уровень АТД",
+    "_display_mid_atd": "Средний уровень АТД",
+    "_display_low_atd": "Низовой уровень / объект",
+    "_display_unit_type": "Тип единицы",
+    "_display_capital": "Центр",
+    "_display_population": "Население",
+    "_display_hierarchy": "Иерархия",
+    "_display_status": "Статус реконструкции"
   }
 }

@@ -3,43 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Исторические слои — простой просмотрщик</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQWsd1J0oEGx8v0QZ24A9Q54Zkb0H6M=" crossorigin="" onerror="this.remove()">
+  <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v4 · максимально простая сборка</div>
-      <h1>Исторические административные слои</h1>
+      <div class="eyebrow">v5 · верхнеуровневое АТД</div>
+      <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
 
-      <label>Категория</label>
+      <label>Категория слоёв</label>
       <select id="categorySelect">
-        <option value="admin" selected>Административные полигоны</option>
+        <option value="admin" selected>Административные границы</option>
         <option value="all">Все слои</option>
-        <option value="stats">Статистика</option>
+        <option value="stats">Статистика населения</option>
         <option value="settlements">Остроги / пункты</option>
-        <option value="buffer">Буферы</option>
-        <option value="points">Точки</option>
+        <option value="buffer">Буферы острогов</option>
+        <option value="points">Точечные слои</option>
       </select>
 
-      <label>Активный слой</label>
+      <label>Активный срез</label>
       <select id="layerSelect"></select>
 
-      <label>Окраска</label>
+      <label>Окраска карты</label>
       <select id="modeSelect">
-        <option value="category">Единый цвет слоя</option>
-        <option value="parent" selected>По верхнему уровню / parent</option>
-        <option value="type">По типу</option>
+        <option value="top" selected>По верхнему уровню АТД</option>
+        <option value="mid">По среднему уровню АТД</option>
+        <option value="type">По типу единицы</option>
         <option value="uncertain">Спорные / неясные зоны</option>
+        <option value="single">Единый цвет слоя</option>
       </select>
 
       <div class="checks">
-        <label><input id="showWater" type="checkbox" checked> Океан + озёра без reservoirs</label>
+        <label><input id="showWater" type="checkbox" checked> Океан и озёра без водохранилищ</label>
         <label><input id="showRivers" type="checkbox" checked> Реки</label>
         <label><input id="showPrevious" type="checkbox"> Предыдущий срез пунктиром</label>
         <label><input id="showHatch" type="checkbox" checked> Штриховка спорных зон</label>
@@ -47,23 +47,31 @@
       </div>
 
       <div class="buttonRow">
-        <button id="fitLayerBtn">К текущему слою</button>
-        <button id="fitProjectBtn">К экстенту</button>
+        <button id="fitLayerBtn" type="button">К текущему слою</button>
+        <button id="fitProjectBtn" type="button">К экстенту</button>
       </div>
-      <button id="downloadBtn">Скачать активный GeoJSON</button>
+      <button id="downloadBtn" type="button">Скачать активный GeoJSON</button>
 
-      <h2>Таймслайдер</h2>
-      <input id="timeSlider" type="range" min="0" max="0" value="0" step="1">
-      <div class="buttonRow">
-        <button id="prevBtn">← раньше</button>
-        <button id="nextBtn">позже →</button>
-      </div>
+      <section class="timelineBox">
+        <div id="activeLayerCard" class="activeLayerCard">—</div>
+        <input id="timeSlider" type="range" min="0" max="0" value="0" step="1">
+        <div id="timelineTicks" class="timelineTicks"></div>
+        <div class="buttonRow compactButtons">
+          <button id="prevBtn" type="button">← раньше</button>
+          <button id="nextBtn" type="button">позже →</button>
+        </div>
+      </section>
+
+      <h2>Список срезов</h2>
       <div id="radioList" class="radioList"></div>
     </aside>
 
     <aside id="rightPanel" class="panel">
       <h2>Слой</h2>
       <section id="layerInfo" class="box">—</section>
+
+      <h2>Легенда</h2>
+      <section id="legendBox" class="box legendBox">—</section>
 
       <h2>Объект</h2>
       <section id="featureInfo" class="box muted">Кликни по полигону / объекту.</section>
@@ -78,6 +86,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>
