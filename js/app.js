@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION='2.1-hydro';
+const APP_VERSION='2.2-hydro-extent';
 const $=id=>document.getElementById(id);
 const fmt=new Intl.NumberFormat('ru-RU');
 const state={
@@ -31,33 +31,45 @@ function valueColor(v,vals){const n=Number(v); if(!Number.isFinite(n)||!vals.len
 async function loadJson(path){if(state.cache.has(path))return state.cache.get(path); showLoading(true); const r=await fetch(`${path}?v=${APP_VERSION}`,{cache:'no-store'}); if(!r.ok)throw new Error(`${r.status} ${path}`); const j=await r.json(); state.cache.set(path,j); showLoading(false); return j}
 
 function projectBounds(){
-  const adminBoxes=(state.layers||[])
-    .filter(l=>l.category==='admin' && Array.isArray(l.bbox) && l.bbox.length===4)
-    .map(l=>l.bbox);
-  const boxes=adminBoxes.length?adminBoxes:(state.manifest?.bbox?[state.manifest.bbox]:[]);
-  if(!boxes.length) return null;
-  const union=[
-    Math.min(...boxes.map(b=>b[0])),
-    Math.min(...boxes.map(b=>b[1])),
-    Math.max(...boxes.map(b=>b[2])),
-    Math.max(...boxes.map(b=>b[3]))
-  ];
-  return bboxToBounds(union);
+  // Основной рабочий экстент: bbox слоя layer_018 «Границы1798 Тоб губ5 БРЭ»
+  // с буфером примерно 200 км на запад и восток. Не берём общий bbox всех слоёв,
+  // потому что он уводит карту слишком далеко и провоцирует визуальные рывки при zoom/pan.
+  const b=state.manifest?.projectBounds4326;
+  return Array.isArray(b) && b.length===4 ? bboxToBounds(b) : bboxToBounds(state.manifest?.bbox);
 }
 
 function initMap(){
-  state.map=L.map('map',{zoomControl:true,preferCanvas:false,worldCopyJump:false,zoomSnap:0.5});
+  const b=projectBounds();
+  state.map=L.map('map',{
+    zoomControl:true,
+    preferCanvas:false,
+    worldCopyJump:false,
+    minZoom:5,
+    maxZoom:11,
+    zoomSnap:0.25,
+    zoomDelta:0.5,
+    wheelPxPerZoomLevel:220,
+    wheelDebounceTime:70,
+    scrollWheelZoom:'center',
+    doubleClickZoom:'center',
+    touchZoom:'center',
+    zoomAnimation:false,
+    fadeAnimation:false,
+    markerZoomAnimation:false,
+    inertia:false,
+    bounceAtZoomLimits:false,
+    maxBounds:b?b.pad(0.02):undefined,
+    maxBoundsViscosity:0.75
+  });
   state.map.createPane('waterFill'); state.map.getPane('waterFill').style.zIndex='180';
   state.map.createPane('riverPane'); state.map.getPane('riverPane').style.zIndex='190';
   state.map.createPane('previousPane'); state.map.getPane('previousPane').style.zIndex='360';
   state.map.createPane('adminPane'); state.map.getPane('adminPane').style.zIndex='420';
   state.map.createPane('hatchPane'); state.map.getPane('hatchPane').style.zIndex='430';
-  const b=projectBounds();
   if(b){
-    state.map.fitBounds(b,{padding:[24,24]});
-    state.map.setMaxBounds(b.pad(0.8));
+    state.map.setView(b.getCenter(),5,{animate:false});
   } else {
-    state.map.setView([58,82],4);
+    state.map.setView([62,86],5,{animate:false});
   }
   L.control.scale({imperial:false}).addTo(state.map);
 }
@@ -109,17 +121,11 @@ function riverWeight(f){
 }
 
 async function loadHydroBase(){
-  const [oceanRaw,lakesRaw,riversRaw]=await Promise.all([
-    loadJson('data/base/Ocean.geojson'),
-    loadJson('data/base/Lakes.geojson'),
-    loadJson('data/base/Rivers.geojson')
-  ]);
-  const ocean=normalizeFeatureCollection(oceanRaw);
-  const lakes=normalizeFeatureCollection(lakesRaw);
-  const rivers=normalizeFeatureCollection(riversRaw);
-  const filteredLakes={type:'FeatureCollection',features:(lakes.features||[]).filter(f=>!isReservoir(f.properties||{}))};
-  const filteredRivers={type:'FeatureCollection',features:(rivers.features||[]).filter(f=>!isReservoir(f.properties||{}))};
-  const waterMerged={type:'FeatureCollection',features:[...(ocean.features||[]),...(filteredLakes.features||[])]};
+  // Подложка уже предварительно нормализована и обрезана по рабочему экстенту.
+  // Ocean + Lakes объединены в один водный слой; Reservoir исключён на этапе сборки.
+  const waterPath=state.manifest?.hydro?.water || 'data/base/water_no_reservoirs_project.geojson';
+  const riversPath=state.manifest?.hydro?.rivers || 'data/base/rivers_project.geojson';
+  const [waterMerged,filteredRivers]=await Promise.all([loadJson(waterPath),loadJson(riversPath)]);
 
   state.hydro.water=L.geoJSON(waterMerged,{
     pane:'waterFill',interactive:false,
@@ -128,7 +134,7 @@ async function loadHydroBase(){
 
   state.hydro.rivers=L.geoJSON(filteredRivers,{
     pane:'riverPane',interactive:false,
-    style:f=>({color:'#76b6ca',weight:riverWeight(f),opacity:0.95,lineCap:'round',lineJoin:'round'})
+    style:f=>({color:'#76b6ca',weight:riverWeight(f),opacity:0.88,lineCap:'round',lineJoin:'round'})
   }).addTo(state.map);
 
   updateHydroVisibility();
@@ -212,7 +218,7 @@ function layerStyle(meta,prev=false){
     else if(mode==='status')fill=statusColors[p.uncertainty_code||'normal']||'#9ca3af';
     else if(mode==='population')fill=valueColor(p.population,state.lastValues);
     else if(mode==='confidence')fill=catColor(p.confidence||'—');
-    return{color:'#31465a',weight:1.35,opacity:.94,fillColor:fill,fillOpacity:.42};
+    return{color:'#25384d',weight:1.55,opacity:.98,fillColor:fill,fillOpacity:.50};
   };
 }
 
@@ -285,7 +291,7 @@ function fitCurrentLayer(){
   const layer=state.currentLayer||state.previousLayer;
   if(layer){
     const b=layer.getBounds?.();
-    if(b&&b.isValid())state.map.fitBounds(b,{padding:[34,34],maxZoom:7});
+    if(b&&b.isValid())state.map.fitBounds(b,{padding:[34,34],maxZoom:7,animate:false});
   }
 }
 

@@ -14013,7 +14013,7 @@
     "points": "Точечные слои",
     "buffer": "Буферы"
   },
-  "version": "2.0-standardized",
+  "version": "2.2-hydro-extent",
   "generatedAt": "2026-05-03",
   "featureCount": 990,
   "uncertaintyFeatureCount": 34,
@@ -14066,5 +14066,18 @@
     "points": "Точечные слои",
     "buffer": "Буферы",
     "special": "Спец. ведомства"
+  },
+  "projectBoundsSourceLayer": "layer_018 / Границы1798 Тоб губ5 БРЭ",
+  "projectBounds4326": [
+    55.17824915611141,
+    49.333494966359574,
+    118.41855773628669,
+    77.7191495517343
+  ],
+  "projectBoundsPadding": "±200 км по долготе от bbox слоя layer_018",
+  "hydro": {
+    "water": "data/base/water_no_reservoirs_project.geojson",
+    "rivers": "data/base/rivers_project.geojson",
+    "reservoirs": "excluded by featurecla/featureclass/type ~= Reservoir"
   }
 }
