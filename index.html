@@ -2,103 +2,82 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>АТД Западной Сибири — проверка слоёв</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQWsd1J0oEG5wQHZA4C6PhX2HVEVrwM=" crossorigin="" />
-  <link rel="stylesheet" href="css/styles.css?v=3" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Исторические слои — простой просмотрщик</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQWsd1J0oEGx8v0QZ24A9Q54Zkb0H6M=" crossorigin="" onerror="this.remove()">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <div id="app">
-    <main id="mapWrap">
-      <div id="map"></div>
+    <div id="map"></div>
 
-      <section id="timelineBar" class="glass-card" aria-label="Таймлайн">
-        <div class="timeline-head">
-          <span>Активный срез</span>
-          <b id="activeTimeLabel">—</b>
-        </div>
-        <input id="timeSlider" type="range" min="0" max="1" step="1" value="0" />
-        <div class="timeline-footer">
-          <button id="prevBtn" type="button">← раньше</button>
-          <button id="nextBtn" type="button">позже →</button>
-        </div>
-      </section>
-    </main>
+    <aside id="leftPanel" class="panel">
+      <div class="eyebrow">v4 · максимально простая сборка</div>
+      <h1>Исторические административные слои</h1>
+      <div id="status" class="status">Загрузка…</div>
 
-    <aside id="leftPanel" class="panel floating-panel">
-      <div class="eyebrow">Rebuilt v3 · единая проекция</div>
-      <h1>Проверка эволюции административной сетки</h1>
-      <div class="year-card">
-        <span id="layerTitle">Загрузка…</span>
-        <b id="activeTimeLabelBig">EPSG:4326</b>
-      </div>
-
-      <label class="control-label" for="categoryFilter">Группа слоёв</label>
-      <select id="categoryFilter">
-        <option value="admin" selected>Административные границы</option>
+      <label>Категория</label>
+      <select id="categorySelect">
+        <option value="admin" selected>Административные полигоны</option>
         <option value="all">Все слои</option>
-        <option value="stats">Статистика / население</option>
+        <option value="stats">Статистика</option>
         <option value="settlements">Остроги / пункты</option>
         <option value="buffer">Буферы</option>
-        <option value="special">Спец. ведомства</option>
+        <option value="points">Точки</option>
       </select>
 
-      <label class="control-label" for="modeSelect">Окраска</label>
+      <label>Активный слой</label>
+      <select id="layerSelect"></select>
+
+      <label>Окраска</label>
       <select id="modeSelect">
-        <option value="parent" selected>Верхнеуровневая принадлежность</option>
-        <option value="unit_type">Тип единицы</option>
-        <option value="status">Статус / неопределённость</option>
-        <option value="population">Население</option>
-        <option value="confidence">Качество / уверенность</option>
+        <option value="category">Единый цвет слоя</option>
+        <option value="parent" selected>По верхнему уровню / parent</option>
+        <option value="type">По типу</option>
+        <option value="uncertain">Спорные / неясные зоны</option>
       </select>
 
-      <label class="control-label" for="statusFilter">Фильтр статуса</label>
-      <select id="statusFilter">
-        <option value="all" selected>Все объекты</option>
-        <option value="uncertain">Только спорные / неясные / неустойчивые</option>
-        <option value="normal">Только обычные</option>
-      </select>
-
-      <div class="toggles">
-        <label><input type="checkbox" id="toggleHydro" checked /> Океан + озёра без reservoirs</label>
-        <label><input type="checkbox" id="toggleRivers" checked /> Реки</label>
-        <label><input type="checkbox" id="togglePrevious" /> Предыдущий срез пунктиром</label>
-        <label><input type="checkbox" id="toggleHatches" checked /> Штриховка спорных зон</label>
-        <label><input type="checkbox" id="toggleLabels" /> Подписи объектов</label>
-        <label><input type="checkbox" id="toggleAutoFit" checked /> Автомасштаб слоя</label>
+      <div class="checks">
+        <label><input id="showWater" type="checkbox" checked> Океан + озёра без reservoirs</label>
+        <label><input id="showRivers" type="checkbox" checked> Реки</label>
+        <label><input id="showPrevious" type="checkbox"> Предыдущий срез пунктиром</label>
+        <label><input id="showHatch" type="checkbox" checked> Штриховка спорных зон</label>
+        <label><input id="showLabels" type="checkbox"> Постоянные подписи</label>
       </div>
 
-      <div class="button-row">
-        <button id="resetView" type="button">К экстенту проекта</button>
-        <button id="fitLayer" type="button">К текущему слою</button>
+      <div class="buttonRow">
+        <button id="fitLayerBtn">К текущему слою</button>
+        <button id="fitProjectBtn">К экстенту</button>
       </div>
-      <button id="downloadLayer" type="button">Скачать текущий GeoJSON</button>
+      <button id="downloadBtn">Скачать активный GeoJSON</button>
 
-      <h2 class="section-title">Срезы</h2>
-      <div id="snapshotRadios" class="snapshot-list"></div>
+      <h2>Таймслайдер</h2>
+      <input id="timeSlider" type="range" min="0" max="0" value="0" step="1">
+      <div class="buttonRow">
+        <button id="prevBtn">← раньше</button>
+        <button id="nextBtn">позже →</button>
+      </div>
+      <div id="radioList" class="radioList"></div>
     </aside>
 
-    <aside id="rightPanel" class="panel floating-panel">
-      <h2>Текущий слой</h2>
-      <section id="layerInfo" class="feature-info muted">Загрузка…</section>
+    <aside id="rightPanel" class="panel">
+      <h2>Слой</h2>
+      <section id="layerInfo" class="box">—</section>
 
-      <h2 class="section-title">Объект</h2>
-      <section id="featureInfo" class="feature-info muted">Кликни по объекту на карте или по строке в таблице.</section>
+      <h2>Объект</h2>
+      <section id="featureInfo" class="box muted">Кликни по полигону / объекту.</section>
 
-      <h2 class="section-title">Спорные / неясные зоны</h2>
-      <section id="uncertaintyBox" class="feature-info muted">—</section>
+      <h2>Поля</h2>
+      <section id="schemaInfo" class="box scrollBox">—</section>
 
-      <h2 class="section-title">Структура атрибутов</h2>
-      <section id="schemaBox" class="feature-info attr-panel muted">—</section>
-
-      <h2 class="section-title">Таблица объектов</h2>
-      <input id="tableSearch" class="search-input" type="search" placeholder="Фильтр по таблице…" />
-      <section id="attributeTableBox" class="feature-info table-panel muted">—</section>
+      <h2>Объекты</h2>
+      <input id="tableSearch" class="search" placeholder="Фильтр по атрибутам…">
+      <section id="tableBox" class="box scrollBox">—</section>
     </aside>
   </div>
 
-  <div id="loading" class="loading">Загрузка…</div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>
