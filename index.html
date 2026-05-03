@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Эволюция административной сетки Западной Сибири</title>
+  <meta name="description" content="Лёгкий статический просмотрщик GeoJSON-слоёв с таймслайдером и инспектором атрибутов." />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar" aria-label="Панель управления">
+      <header class="brand">
+        <div>
+          <p class="eyebrow">Историческая ГИС</p>
+          <h1>Административная сетка Западной Сибири</h1>
+        </div>
+        <button id="collapseBtn" class="icon-btn" title="Свернуть панель" aria-label="Свернуть панель">☰</button>
+      </header>
+
+      <section class="card controls-card">
+        <div class="control-head">
+          <div>
+            <span class="muted">Срез</span>
+            <strong id="currentYear">—</strong>
+          </div>
+          <div class="timeline-buttons">
+            <button id="prevBtn" class="small-btn" title="Предыдущий слой">←</button>
+            <button id="playBtn" class="small-btn primary" title="Автопрокрутка">▶</button>
+            <button id="nextBtn" class="small-btn" title="Следующий слой">→</button>
+          </div>
+        </div>
+
+        <input id="timeSlider" class="timeline" type="range" min="0" max="0" value="0" step="1" />
+        <div class="scale-row">
+          <span id="minYear">—</span>
+          <span id="sliderPosition">0 / 0</span>
+          <span id="maxYear">—</span>
+        </div>
+
+        <label class="label" for="categoryFilter">Состав таймлайна</label>
+        <select id="categoryFilter">
+          <option value="admin" selected>Только административные границы</option>
+          <option value="all">Все слои</option>
+          <option value="stats">Статистика / население</option>
+          <option value="settlements">Остроги / пункты</option>
+          <option value="buffer">Буферы</option>
+        </select>
+
+        <div class="checks">
+          <label><input id="showPrevious" type="checkbox" checked /> Показывать предыдущий срез серым пунктиром</label>
+          <label><input id="autoFit" type="checkbox" checked /> Автоприближение к слою</label>
+          <label><input id="labelsToggle" type="checkbox" /> Постоянные подписи объектов</label>
+        </div>
+      </section>
+
+      <section class="card layer-card">
+        <div class="layer-title-row">
+          <div>
+            <p class="eyebrow">Текущий слой</p>
+            <h2 id="layerTitle">Загрузка…</h2>
+          </div>
+          <a id="downloadLayer" class="small-btn ghost" href="#" download>GeoJSON</a>
+        </div>
+        <dl class="facts">
+          <div><dt>Объектов</dt><dd id="featureCount">—</dd></div>
+          <div><dt>Геометрия</dt><dd id="geometryTypes">—</dd></div>
+          <div><dt>Полей</dt><dd id="fieldCount">—</dd></div>
+          <div><dt>Категория</dt><dd id="categoryName">—</dd></div>
+        </dl>
+        <p id="sourceName" class="source-name">—</p>
+      </section>
+
+      <section class="card schema-card">
+        <div class="section-head">
+          <h3>Атрибутивная структура</h3>
+          <button id="copySchemaBtn" class="small-btn ghost">Скопировать CSV</button>
+        </div>
+        <div class="schema-wrap">
+          <table id="schemaTable" class="compact-table">
+            <thead><tr><th>Поле</th><th>Тип</th><th>Заполн.</th><th>Примеры</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card attr-card">
+        <div class="section-head">
+          <h3>Атрибуты объектов</h3>
+          <span id="rowCounter" class="muted">—</span>
+        </div>
+        <input id="tableSearch" type="search" placeholder="Поиск по атрибутам текущего слоя…" />
+        <div class="table-wrap">
+          <table id="attrTable" class="attr-table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </aside>
+
+    <main class="map-shell">
+      <div id="map" aria-label="Карта"></div>
+      <div id="loading" class="loading hidden">Загрузка слоя…</div>
+      <div id="legend" class="legend">
+        <div><span class="swatch current"></span> текущий срез</div>
+        <div><span class="swatch previous"></span> предыдущий срез</div>
+        <div><span class="swatch point"></span> точки / статистика</div>
+      </div>
+      <button id="fitAllBtn" class="map-btn">Показать всё</button>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
