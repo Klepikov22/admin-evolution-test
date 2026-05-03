@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v7 · карта + компоновка</div>
+      <div class="eyebrow">v8 · карта + компоновка</div>
       <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
       <button id="exportModeBtn" type="button" class="primaryAction">Экспорт / печать</button>
@@ -86,46 +86,78 @@
     </aside>
   </div>
 
-
   <section id="printWorkspace" class="printWorkspace hidden" aria-label="Режим компоновки карты">
     <aside class="printPanel">
       <div class="eyebrow">Print Layout Mode</div>
       <h2>Компоновка</h2>
       <label>Заголовок карты</label>
       <input id="printTitleInput" class="search" value="Эволюция административной сетки Западной Сибири">
+
       <div class="printGridControls">
-        <div><label>Формат</label><select id="paperFormatSelect"><option value="a4" selected>A4</option><option value="a3">A3</option></select></div>
+        <div><label>Формат</label><select id="paperFormatSelect"><option value="a4">A4</option><option value="a3" selected>A3</option></select></div>
         <div><label>Ориентация</label><select id="paperOrientationSelect"><option value="landscape" selected>Альбомная</option><option value="portrait">Книжная</option></select></div>
         <div><label>DPI</label><select id="printDpiSelect"><option>150</option><option selected>300</option><option>600</option></select></div>
       </div>
+
       <div class="checks printChecks">
         <label><input id="showPrintLegend" type="checkbox" checked> Легенда</label>
         <label><input id="showPrintScale" type="checkbox" checked> Масштабная линейка</label>
         <label><input id="showPrintNorth" type="checkbox" checked> Стрелка севера</label>
-        <label><input id="showPrintGrid" type="checkbox" checked> Координатная сетка</label>
-        <label><input id="showPrintSource" type="checkbox" checked> Источник / срез</label>
+        <label><input id="showPrintGrid" type="checkbox" checked> Градусная сетка</label>
+        <label><input id="showPrintGridLabels" type="checkbox" checked> Подписи градусной сетки</label>
+        <label><input id="showPrintSource" type="checkbox" checked> Контекст / источник</label>
       </div>
+
+      <label>Размер подписей градусной сетки: <b id="printGridLabelSizeValue">11</b> px</label>
+      <input id="printGridLabelSize" type="range" min="8" max="18" step="1" value="11">
+
       <button id="browserPrintBtn" type="button">Печать / PDF через браузер</button>
       <button id="pngExportBtn" type="button">Экспорт PNG</button>
       <button id="exitPrintBtn" type="button" class="secondaryAction">Вернуться к дашборду</button>
-      <p class="printNote">Карта внутри фрейма остаётся интерактивной: можно подвигать и приблизить область перед печатью. Экспорт рассчитан как лёгкий режим без смены движка карты.</p>
+
+      <p class="printNote">Экспортный экстент теперь строится автоматически по выбранному слою или выделенному объекту с буфером. Блоки заголовка, контекста, сводки и легенды можно перетаскивать вокруг картографического поля.</p>
     </aside>
+
     <main class="printStage">
-      <div id="printPage" class="printPage" data-format="a4" data-orientation="landscape">
-        <header id="printTitleBox" class="printTitle">Эволюция административной сетки Западной Сибири</header>
-        <section id="printMapFrame" class="printMapFrame">
-          <div id="printMapSlot" class="printMapSlot"></div>
-          <div id="printNorthArrow" class="northArrow"><b>С</b><span>▲</span></div>
-          <div id="printScaleBar" class="printScaleBar"></div>
-        </section>
-        <aside id="printLegend" class="printLegend"></aside>
-        <footer id="printSourceBox" class="printSource"></footer>
+      <div id="printPage" class="printPage" data-format="a3" data-orientation="landscape">
+        <div id="printWorkArea" class="printWorkArea">
+          <section id="printMapFrame" class="printMapFrame">
+            <div class="printFieldMargin">
+              <div id="printMapField" class="printMapField">
+                <div id="printMapSlot" class="printMapSlot"></div>
+                <div id="printGridLabels" class="printGridLabels"></div>
+                <div id="printNorthArrow" class="northArrow"><b>С</b><span>▲</span></div>
+                <div id="printScaleBar" class="printScaleBar"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="printTitleBox" class="printBox printTitle draggable" data-default-x="24" data-default-y="16">
+            <div class="dragHandle">Заголовок</div>
+            <div id="printTitleText" class="printBoxBody titleBody">Эволюция административной сетки Западной Сибири</div>
+          </section>
+
+          <section id="printSummary" class="printBox printSummary draggable" data-default-x="24" data-default-y="114">
+            <div class="dragHandle">Сводка</div>
+            <div id="printSummaryBody" class="printBoxBody"></div>
+          </section>
+
+          <section id="printLegend" class="printBox printLegend draggable" data-default-right="24" data-default-y="24">
+            <div class="dragHandle">Легенда</div>
+            <div id="printLegendBody" class="printBoxBody"></div>
+          </section>
+
+          <section id="printSourceBox" class="printBox printSource draggable" data-default-x="24" data-default-bottom="22">
+            <div class="dragHandle">Контекст</div>
+            <div id="printSourceText" class="printBoxBody"></div>
+          </section>
+        </div>
       </div>
     </main>
   </section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

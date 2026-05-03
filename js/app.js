@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '7.0-print-layout-hatch-canvas';
+const VERSION = '8.0-print-layout-autoextent-draggable';
 const $ = (id) => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -22,8 +22,13 @@ const state = {
   selectedLayer: null,
   selectedFeature: null,
   graticuleLayer: null,
-  graticuleLabels: null,
-  print: { active:false, originalParent:null, originalNext:null },
+  cacheBoundsLayer: null,
+  print: {
+    active:false,
+    originalParent:null,
+    originalNext:null,
+    draggablesReady:false,
+  },
 };
 
 const dom = {
@@ -55,9 +60,12 @@ const dom = {
   printWorkspace: $('printWorkspace'),
   exitPrint: $('exitPrintBtn'),
   printMapFrame: $('printMapFrame'),
+  printMapField: $('printMapField'),
   printMapSlot: $('printMapSlot'),
+  printGridLabels: $('printGridLabels'),
   printTitle: $('printTitleInput'),
   printTitleBox: $('printTitleBox'),
+  printTitleText: $('printTitleText'),
   paperFormat: $('paperFormatSelect'),
   paperOrientation: $('paperOrientationSelect'),
   printDpi: $('printDpiSelect'),
@@ -65,11 +73,18 @@ const dom = {
   showPrintScale: $('showPrintScale'),
   showPrintNorth: $('showPrintNorth'),
   showPrintGrid: $('showPrintGrid'),
+  showPrintGridLabels: $('showPrintGridLabels'),
+  printGridLabelSize: $('printGridLabelSize'),
+  printGridLabelSizeValue: $('printGridLabelSizeValue'),
   showPrintSource: $('showPrintSource'),
   printLegend: $('printLegend'),
+  printLegendBody: $('printLegendBody'),
   printScale: $('printScaleBar'),
   printNorth: $('printNorthArrow'),
   printSource: $('printSourceBox'),
+  printSourceText: $('printSourceText'),
+  printSummary: $('printSummary'),
+  printSummaryBody: $('printSummaryBody'),
   printPage: $('printPage'),
   browserPrint: $('browserPrintBtn'),
   pngExport: $('pngExportBtn'),
@@ -91,7 +106,7 @@ const fieldLabels = {
   _display_name: 'Объект',
   _display_map_atd: 'Отображаемый уровень АТД',
   _display_top_atd: 'Высший уровень АТД',
-  _display_mid_atd: 'Средний уровень АТД / провинция',
+  _display_mid_atd: 'Средний уровень АТД',
   _display_low_atd: 'Низовой уровень / объект',
   _display_unit_type: 'Тип единицы',
   _display_capital: 'Центр',
@@ -120,10 +135,6 @@ function compact(v,n=160){
   const s = String(v);
   return s.length > n ? s.slice(0,n) + '…' : s;
 }
-function num(v){
-  const n = Number(v);
-  return Number.isFinite(n) ? fmt.format(Math.round(n)) : '—';
-}
 function setStatus(txt){ dom.status.innerHTML = txt; }
 function labelForField(k){ return fieldLabels[k] || state.manifest?.fieldLabels?.[k] || k; }
 function displayTitle(m){ return m?.displayTitle || m?.title || 'Слой'; }
@@ -132,6 +143,7 @@ function currentIndex(){ return Math.max(0, state.filtered.findIndex(l => l.id =
 function geometryType(f){ return f?.geometry?.type || ''; }
 function isPointFeature(f){ return /Point/.test(geometryType(f)); }
 function cleanText(v){ return String(v ?? '').trim(); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 
 function colorFor(v){
   const k = cleanText(v) || 'Не указано';
@@ -169,6 +181,7 @@ function initMap(){
   state.map.createPane('previousPane'); state.map.getPane('previousPane').style.zIndex = 360;
   state.map.createPane('adminPane'); state.map.getPane('adminPane').style.zIndex = 420;
   state.map.createPane('hatchPane'); state.map.getPane('hatchPane').style.zIndex = 430;
+  state.map.createPane('gridPane'); state.map.getPane('gridPane').style.zIndex = 560;
   state.map.setView(b.getCenter(), state.manifest.minZoom || 5, {animate:false});
   L.control.scale({imperial:false}).addTo(state.map);
 }
@@ -176,6 +189,7 @@ function initMap(){
 function projectFit(){
   const b = boundsFromBbox(state.manifest.projectBounds);
   state.map.setView(b.getCenter(), state.manifest.minZoom || 5, {animate:false});
+  if(state.print.active) setTimeout(updatePrintLayoutElements, 80);
 }
 
 function getName(f){
@@ -197,7 +211,6 @@ function isUncertain(f){
   return /(спорн|неясн|неустойчив|двоедан|двое\s*дан|переходн|особый статус|особая зона)/.test(text);
 }
 
-
 function styleValue(f){
   const mode = dom.mode.value;
   if(mode === 'top') return getMapAtd(f);
@@ -215,18 +228,10 @@ function featureStyle(f, previous=false){
   if(dom.mode.value === 'uncertain') fill = isUncertain(f) ? statusColors.uncertain : statusColors.normal;
   else if(dom.mode.value !== 'single') fill = colorFor(styleValue(f));
   const uncertain = isUncertain(f);
-  // Спорные / двоеданческие / неясные полигоны не получают собственного внешнего контура.
-  // Их читаем через штриховку, а базовая заливка оставлена очень лёгкой.
   if(uncertain && !isPointFeature(f)){
     return {color:'transparent', weight:0, opacity:0, fillColor:fill, fillOpacity:.12};
   }
-  return {
-    color:'#263746',
-    weight:1.35,
-    opacity:.98,
-    fillColor:fill,
-    fillOpacity:.46,
-  };
+  return { color:'#263746', weight:1.35, opacity:.98, fillColor:fill, fillOpacity:.46 };
 }
 
 function selectedOutlineStyle(){
@@ -244,7 +249,6 @@ function pointStyle(f, previous=false){
     opacity: .98,
   };
 }
-
 
 const HatchCanvasLayer = L.Layer.extend({
   initialize(features, colorFn, options={}){
@@ -288,7 +292,7 @@ const HatchCanvasLayer = L.Layer.extend({
     if(g.type === 'MultiPolygon') return g.coordinates || [];
     return [];
   },
-  _draw(ctx, size){
+  _draw(ctx){
     const spacing = this.options.spacing;
     const alpha = this.options.opacity;
     for(const feature of this.features){
@@ -315,7 +319,6 @@ const HatchCanvasLayer = L.Layer.extend({
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = color;
         ctx.lineWidth = this.options.lineWidth;
-        const span = (maxX-minX) + (maxY-minY) + 80;
         const start = Math.floor((minX - maxY - 80) / spacing) * spacing;
         const end = Math.ceil((maxX - minY + 80) / spacing) * spacing;
         for(let d=start; d<=end; d+=spacing){
@@ -382,51 +385,8 @@ async function drawPrevious(){
 }
 
 function hatchColor(f){
-  // Штриховку привязываем к ближайшему содержательному административному признаку: отображаемый уровень, затем верхний АТД.
-  // Это стабильнее, чем геометрический nearest-neighbour в браузере, и совпадает с цветом выверенной соседней группы.
   return colorFor(getMapAtd(f) || getTopAtd(f) || 'Спорная зона');
 }
-
-function hatchId(color){
-  return 'hatch_' + String(color || '#999').replace(/[^a-zA-Z0-9]/g,'');
-}
-
-function ensureHatchPatterns(features){
-  const svgs = document.querySelectorAll('#map .leaflet-overlay-pane svg');
-  if(!svgs.length) return;
-  const colors = [...new Set((features || []).map(hatchColor))];
-  const ns = 'http://www.w3.org/2000/svg';
-  svgs.forEach(svg => {
-    let defs = svg.querySelector('defs');
-    if(!defs){
-      defs = document.createElementNS(ns,'defs');
-      svg.insertBefore(defs, svg.firstChild);
-    }
-    colors.forEach(color => {
-      const id = hatchId(color);
-      if(defs.querySelector('#' + id)) return;
-      const pat = document.createElementNS(ns,'pattern');
-      pat.setAttribute('id', id);
-      pat.setAttribute('patternUnits','userSpaceOnUse');
-      pat.setAttribute('width','9');
-      pat.setAttribute('height','9');
-      pat.setAttribute('patternTransform','rotate(45)');
-      const bg = document.createElementNS(ns,'rect');
-      bg.setAttribute('x','0'); bg.setAttribute('y','0'); bg.setAttribute('width','9'); bg.setAttribute('height','9');
-      bg.setAttribute('fill','#ffffff'); bg.setAttribute('opacity','.05');
-      const line = document.createElementNS(ns,'line');
-      line.setAttribute('x1','0'); line.setAttribute('y1','0'); line.setAttribute('x2','0'); line.setAttribute('y2','9');
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width','1.6');
-      line.setAttribute('opacity','.62');
-      pat.appendChild(bg);
-      pat.appendChild(line);
-      defs.appendChild(pat);
-    });
-  });
-}
-
-
 
 async function selectLayer(id){
   state.currentId = id;
@@ -452,17 +412,64 @@ async function selectLayer(id){
     }
   }
   renderPanels(gj);
-  fitCurrentLayer(false);
+  if(state.print.active) fitPrintExtent();
+  else fitCurrentLayer(false);
   setStatus(`Активно: <b>${esc(state.currentMeta.timeLabel)}</b> · ${esc(displayTitle(state.currentMeta))} · объектов: ${fmt.format(state.currentMeta.featureCount)}`);
   updatePrintLayoutElements();
 }
 
+function layerBoundsForFeature(f){
+  if(!f) return null;
+  const layer = L.geoJSON(f);
+  const b = layer.getBounds?.();
+  if(b && b.isValid()) return b;
+  const g = f.geometry || {};
+  if(g.type === 'Point'){
+    const [lon, lat] = g.coordinates;
+    const d = 0.6;
+    return L.latLngBounds([lat-d, lon-d], [lat+d, lon+d]);
+  }
+  return null;
+}
+
+function getPrintTargetBounds(){
+  if(state.selectedFeature){
+    const b = layerBoundsForFeature(state.selectedFeature);
+    if(b && b.isValid()) return b;
+  }
+  const b = state.currentLayer?.getBounds?.();
+  if(b && b.isValid()) return b;
+  return boundsFromBbox(state.manifest.projectBounds);
+}
+
+function bufferedBounds(bounds, fraction=.08){
+  if(!bounds || !bounds.isValid()) return bounds;
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  let latPad = Math.abs(ne.lat - sw.lat) * fraction;
+  let lngPad = Math.abs(ne.lng - sw.lng) * fraction;
+  if(latPad < 0.18) latPad = 0.18;
+  if(lngPad < 0.18) lngPad = 0.18;
+  return L.latLngBounds([sw.lat - latPad, sw.lng - lngPad], [ne.lat + latPad, ne.lng + lngPad]);
+}
 
 function fitCurrentLayer(animated=true){
   const l = state.currentLayer;
   if(!l) return;
   const b = l.getBounds?.();
-  if(b && b.isValid()) { state.map.fitBounds(b, {padding:[28,28], maxZoom:7, animate:animated}); setTimeout(updatePrintLayoutElements, 60); }
+  if(b && b.isValid()) {
+    state.map.fitBounds(bufferedBounds(b, .05), {padding:[28,28], maxZoom:7, animate:animated});
+    setTimeout(updatePrintLayoutElements, 60);
+  }
+}
+
+function fitPrintExtent(){
+  if(!state.map) return;
+  const b = bufferedBounds(getPrintTargetBounds(), .10);
+  if(b && b.isValid()){
+    state.map.fitBounds(b, {padding:[24,24], maxZoom:8, animate:false});
+    setTimeout(updatePrintLayoutElements, 120);
+  }
 }
 
 async function drawHydro(){
@@ -496,6 +503,10 @@ function selectFeature(f,l){
   state.selectedFeature = f;
   if(l.setStyle) l.setStyle(selectedOutlineStyle());
   renderFeature(f);
+  if(state.print.active){
+    fitPrintExtent();
+  }
+  updatePrintLayoutElements();
 }
 
 function renderFeature(f){
@@ -640,41 +651,85 @@ function renderRadios(){
   });
 }
 
+function clearGraticule(){
+  if(state.graticuleLayer){ state.map.removeLayer(state.graticuleLayer); state.graticuleLayer=null; }
+  if(dom.printGridLabels) dom.printGridLabels.innerHTML = '';
+}
+
+function degreeStep(span){
+  if(span <= 4) return 0.5;
+  if(span <= 8) return 1;
+  if(span <= 18) return 2;
+  if(span <= 35) return 5;
+  return 10;
+}
+
+function formatLon(lon){
+  const hemi = lon >= 0 ? 'E' : 'W';
+  const abs = Math.abs(lon);
+  return `${Number.isInteger(abs) ? abs : abs.toFixed(1)}°${hemi}`;
+}
+function formatLat(lat){
+  const hemi = lat >= 0 ? 'N' : 'S';
+  const abs = Math.abs(lat);
+  return `${Number.isInteger(abs) ? abs : abs.toFixed(1)}°${hemi}`;
+}
+
+function addGridLabel(side, x, y, text){
+  if(!dom.printGridLabels || !dom.showPrintGridLabels.checked) return;
+  const el = document.createElement('div');
+  el.className = `printGridLabel ${side}`;
+  el.textContent = text;
+  el.style.fontSize = `${dom.printGridLabelSize?.value || 11}px`;
+  if(side === 'top' || side === 'bottom') el.style.left = `${x}px`;
+  else el.style.top = `${y}px`;
+  dom.printGridLabels.appendChild(el);
+}
 
 function buildGraticule(){
   clearGraticule();
-  if(!state.map || !dom.showPrintGrid?.checked) return;
+  if(!state.map || !state.print.active || !dom.showPrintGrid?.checked) return;
   const b = state.map.getBounds();
   const lonSpan = Math.abs(b.getEast() - b.getWest());
   const latSpan = Math.abs(b.getNorth() - b.getSouth());
-  const step = Math.max(1, Math.round(Math.max(lonSpan,latSpan)/6));
+  const step = Math.max(0.5, degreeStep(Math.max(lonSpan,latSpan)));
   const lon0 = Math.ceil(b.getWest()/step)*step;
   const lat0 = Math.ceil(b.getSouth()/step)*step;
   state.graticuleLayer = L.layerGroup().addTo(state.map);
-  state.graticuleLabels = L.layerGroup().addTo(state.map);
-  for(let lon=lon0; lon<=b.getEast(); lon+=step){
+  const width = dom.printMapField.clientWidth;
+  const height = dom.printMapField.clientHeight;
+
+  for(let lon=lon0; lon<=b.getEast()+0.0001; lon+=step){
     const pts=[];
     for(let i=0;i<=80;i++){
       const lat=b.getSouth()+(b.getNorth()-b.getSouth())*i/80;
       pts.push([lat,lon]);
     }
-    L.polyline(pts,{interactive:false,color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
-    L.marker([b.getSouth()+latSpan*.02, lon],{interactive:false,icon:L.divIcon({className:'gridLabel',html:`${Math.round(lon)}°E`,iconSize:[46,16],iconAnchor:[23,8]})}).addTo(state.graticuleLabels);
+    L.polyline(pts,{interactive:false,pane:'gridPane',color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
+    if(dom.showPrintGridLabels.checked){
+      const ptTop = state.map.latLngToContainerPoint([b.getNorth(), lon]);
+      const ptBottom = state.map.latLngToContainerPoint([b.getSouth(), lon]);
+      addGridLabel('top', clamp(ptTop.x, 22, width-22), 0, formatLon(Number(lon.toFixed(2))));
+      addGridLabel('bottom', clamp(ptBottom.x, 22, width-22), 0, formatLon(Number(lon.toFixed(2))));
+    }
   }
-  for(let lat=lat0; lat<=b.getNorth(); lat+=step){
+
+  for(let lat=lat0; lat<=b.getNorth()+0.0001; lat+=step){
     const pts=[];
     for(let i=0;i<=100;i++){
       const lon=b.getWest()+(b.getEast()-b.getWest())*i/100;
       pts.push([lat,lon]);
     }
-    L.polyline(pts,{interactive:false,color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
-    L.marker([lat, b.getWest()+lonSpan*.02],{interactive:false,icon:L.divIcon({className:'gridLabel',html:`${Math.round(lat)}°N`,iconSize:[46,16],iconAnchor:[23,8]})}).addTo(state.graticuleLabels);
+    L.polyline(pts,{interactive:false,pane:'gridPane',color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
+    if(dom.showPrintGridLabels.checked){
+      const ptLeft = state.map.latLngToContainerPoint([lat, b.getWest()]);
+      const ptRight = state.map.latLngToContainerPoint([lat, b.getEast()]);
+      addGridLabel('left', 0, clamp(ptLeft.y, 18, height-18), formatLat(Number(lat.toFixed(2))));
+      addGridLabel('right', 0, clamp(ptRight.y, 18, height-18), formatLat(Number(lat.toFixed(2))));
+    }
   }
 }
-function clearGraticule(){
-  if(state.graticuleLayer){ state.map.removeLayer(state.graticuleLayer); state.graticuleLayer=null; }
-  if(state.graticuleLabels){ state.map.removeLayer(state.graticuleLabels); state.graticuleLabels=null; }
-}
+
 function metersPerPixelAtCenter(){
   if(!state.map) return 1;
   const center = state.map.getCenter();
@@ -692,32 +747,132 @@ function niceDistance(m){
 }
 function updateScaleBar(){
   if(!dom.printScale || !state.print.active) return;
-  const targetPx = 160;
+  const targetPx = Math.max(120, Math.round(dom.printMapField.clientWidth * 0.16));
   const meters = niceDistance(metersPerPixelAtCenter() * targetPx);
   const widthPx = Math.max(40, Math.round(meters / metersPerPixelAtCenter()));
   dom.printScale.innerHTML = `<div class="scaleBarLine" style="width:${widthPx}px"></div><b>${meters>=1000 ? (meters/1000)+' км' : meters+' м'}</b>`;
 }
+
+function getCurrentSummary(){
+  const feats = state.currentJson?.features || [];
+  const uncertain = feats.filter(isUncertain).length;
+  const topCount = new Set(feats.map(getTopAtd).filter(Boolean)).size;
+  const midCount = new Set(feats.map(getMidAtd).filter(Boolean)).size;
+  return {
+    count: feats.length,
+    topCount,
+    midCount,
+    uncertain,
+    selected: state.selectedFeature ? getName(state.selectedFeature) : 'нет',
+  };
+}
+
 function applyPaperSettings(){
   if(!dom.printPage) return;
-  const format = dom.paperFormat?.value || 'a4';
+  const format = dom.paperFormat?.value || 'a3';
   const orient = dom.paperOrientation?.value || 'landscape';
   dom.printPage.dataset.format = format;
   dom.printPage.dataset.orientation = orient;
   const title = dom.printTitle?.value || (state.currentMeta ? `${state.currentMeta.timeLabel} — ${displayTitle(state.currentMeta)}` : 'Карта');
-  if(dom.printTitleBox) dom.printTitleBox.textContent = title;
+  if(dom.printTitleText) dom.printTitleText.textContent = title;
+  if(dom.printGridLabelSizeValue) dom.printGridLabelSizeValue.textContent = dom.printGridLabelSize?.value || '11';
 }
+
 function updatePrintLayoutElements(){
   if(!state.print.active) return;
   applyPaperSettings();
-  if(dom.printLegend && dom.legend){ dom.printLegend.innerHTML = `<h3>Легенда</h3>${dom.legend.innerHTML}`; dom.printLegend.style.display = dom.showPrintLegend?.checked ? 'block' : 'none'; }
+
+  if(dom.printLegend && dom.legend){
+    dom.printLegend.style.display = dom.showPrintLegend?.checked ? 'block' : 'none';
+    dom.printLegendBody.innerHTML = dom.legend.innerHTML || '<div class="muted">Нет данных.</div>';
+  }
   if(dom.printNorth) dom.printNorth.style.display = dom.showPrintNorth?.checked ? 'grid' : 'none';
   if(dom.printScale){ dom.printScale.style.display = dom.showPrintScale?.checked ? 'flex' : 'none'; updateScaleBar(); }
   if(dom.printSource){
     dom.printSource.style.display = dom.showPrintSource?.checked ? 'block' : 'none';
-    dom.printSource.textContent = `Срез: ${state.currentMeta?.timeLabel || '—'} · ${displayTitle(state.currentMeta)} · источник: ${state.currentMeta?.file || ''}`;
+    dom.printSourceText.innerHTML = `Срез: <b>${esc(state.currentMeta?.timeLabel || '—')}</b><br>${esc(displayTitle(state.currentMeta))}<br>Источник: ${esc(state.currentMeta?.file || '')}`;
+  }
+  if(dom.printSummaryBody){
+    const sum = getCurrentSummary();
+    dom.printSummaryBody.innerHTML = `<div class="summaryRows">
+      <div><span>Период</span><b>${esc(state.currentMeta?.timeLabel || '—')}</b></div>
+      <div><span>Объектов</span><b>${fmt.format(sum.count)}</b></div>
+      <div><span>Верхний уровень</span><b>${fmt.format(sum.topCount)}</b></div>
+      <div><span>Средний уровень</span><b>${fmt.format(sum.midCount)}</b></div>
+      <div><span>Спорных / неясных</span><b>${fmt.format(sum.uncertain)}</b></div>
+      <div><span>Выбранный объект</span><b>${esc(compact(sum.selected,60))}</b></div>
+    </div><div class="printHint">Экстент экспорта строится по выделению или активному слою с буфером.</div>`;
   }
   if(dom.showPrintGrid?.checked) buildGraticule(); else clearGraticule();
 }
+
+function resetDraggablePositions(){
+  document.querySelectorAll('.draggable').forEach(el => {
+    el.style.transform = '';
+    el.dataset.tx = '0';
+    el.dataset.ty = '0';
+    const dx = el.dataset.defaultX;
+    const dy = el.dataset.defaultY;
+    const dr = el.dataset.defaultRight;
+    const db = el.dataset.defaultBottom;
+    if(dx) el.style.left = `${dx}px`; else el.style.left = '';
+    if(dy) el.style.top = `${dy}px`; else el.style.top = '';
+    if(dr) el.style.right = `${dr}px`; else el.style.right = '';
+    if(db) el.style.bottom = `${db}px`; else el.style.bottom = '';
+  });
+}
+
+function makeDraggable(el){
+  if(!el || el.dataset.draggableReady === '1') return;
+  el.dataset.draggableReady = '1';
+  el.dataset.tx = el.dataset.tx || '0';
+  el.dataset.ty = el.dataset.ty || '0';
+  let startX=0, startY=0, startTx=0, startTy=0;
+
+  const onMove = (e) => {
+    const page = dom.printPage.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    let tx = startTx + (e.clientX - startX);
+    let ty = startTy + (e.clientY - startY);
+    const left0 = rect.left - startTx;
+    const top0 = rect.top - startTy;
+    const nextLeft = left0 + tx - page.left;
+    const nextTop = top0 + ty - page.top;
+    const maxX = page.width - rect.width - 8 - (left0 - page.left);
+    const minX = 8 - (left0 - page.left);
+    const maxY = page.height - rect.height - 8 - (top0 - page.top);
+    const minY = 8 - (top0 - page.top);
+    tx = clamp(tx, minX, maxX);
+    ty = clamp(ty, minY, maxY);
+    el.dataset.tx = String(tx);
+    el.dataset.ty = String(ty);
+    el.style.transform = `translate(${tx}px, ${ty}px)`;
+  };
+  const onUp = () => {
+    el.classList.remove('dragging');
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+  };
+  el.addEventListener('pointerdown', (e) => {
+    if(!e.target.closest('.dragHandle')) return;
+    e.preventDefault();
+    el.classList.add('dragging');
+    startX = e.clientX;
+    startY = e.clientY;
+    startTx = Number(el.dataset.tx || 0);
+    startTy = Number(el.dataset.ty || 0);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+}
+
+function initDraggables(){
+  if(state.print.draggablesReady) return;
+  document.querySelectorAll('.draggable').forEach(makeDraggable);
+  resetDraggablePositions();
+  state.print.draggablesReady = true;
+}
+
 function enterPrintMode(){
   if(state.print.active || !dom.printWorkspace || !dom.printMapSlot) return;
   state.print.originalParent = $('app');
@@ -728,12 +883,14 @@ function enterPrintMode(){
   applyPaperSettings();
   dom.printMapSlot.appendChild(mapEl);
   state.print.active = true;
+  initDraggables();
   setTimeout(()=>{
     state.map.invalidateSize(false);
-    fitCurrentLayer(false);
+    fitPrintExtent();
     updatePrintLayoutElements();
-  },80);
+  },120);
 }
+
 function exitPrintMode(){
   if(!state.print.active) return;
   clearGraticule();
@@ -743,11 +900,13 @@ function exitPrintMode(){
   dom.printWorkspace.classList.add('hidden');
   document.body.classList.remove('print-mode');
   state.print.active = false;
-  setTimeout(()=>{ state.map.invalidateSize(false); fitCurrentLayer(false); },80);
+  setTimeout(()=>{ state.map.invalidateSize(false); fitCurrentLayer(false); },120);
 }
+
 async function exportPrintPng(){
   if(!window.html2canvas){ window.print(); return; }
   updatePrintLayoutElements();
+  await new Promise(r => setTimeout(r, 180));
   const canvas = await html2canvas(dom.printPage, {backgroundColor:'#ffffff', scale:2, useCORS:true});
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');
@@ -776,12 +935,21 @@ function bind(){
   dom.search.addEventListener('input', () => state.currentJson && renderTable(state.currentJson.features || []));
   dom.exportMode?.addEventListener('click', enterPrintMode);
   dom.exitPrint?.addEventListener('click', exitPrintMode);
-  [dom.printTitle, dom.paperFormat, dom.paperOrientation, dom.printDpi, dom.showPrintLegend, dom.showPrintScale, dom.showPrintNorth, dom.showPrintGrid, dom.showPrintSource]
+  [dom.printTitle, dom.paperFormat, dom.paperOrientation, dom.printDpi, dom.showPrintLegend, dom.showPrintScale, dom.showPrintNorth, dom.showPrintGrid, dom.showPrintGridLabels, dom.showPrintSource, dom.printGridLabelSize]
     .filter(Boolean)
-    .forEach(el => el.addEventListener('input', updatePrintLayoutElements));
-  dom.browserPrint?.addEventListener('click', () => { updatePrintLayoutElements(); window.print(); });
+    .forEach(el => el.addEventListener('input', () => {
+      applyPaperSettings();
+      if(state.print.active){
+        setTimeout(() => { state.map.invalidateSize(false); updatePrintLayoutElements(); }, 40);
+      }
+    }));
+  dom.browserPrint?.addEventListener('click', async () => {
+    updatePrintLayoutElements();
+    await new Promise(r => setTimeout(r, 120));
+    window.print();
+  });
   dom.pngExport?.addEventListener('click', exportPrintPng);
-  state.map.on('moveend zoomend', () => { if(state.print.active) updatePrintLayoutElements(); });
+  state.map.on('moveend zoomend resize', () => { if(state.print.active) updatePrintLayoutElements(); });
 }
 
 async function init(){
