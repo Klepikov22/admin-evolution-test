@@ -1,6 +1,6 @@
 {
   "title": "Историческая административная сетка Западной Сибири",
-  "version": "5.0-top-atd-display",
+  "version": "6.0-province-hatch-fix",
   "projectBounds": [
     55.17824915611141,
     49.333494966359574,
@@ -41,7 +41,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_032",
@@ -68,7 +69,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_033",
@@ -95,7 +97,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_034",
@@ -122,7 +125,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_035",
@@ -149,7 +153,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_036",
@@ -176,7 +181,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_037",
@@ -203,7 +209,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_038",
@@ -230,7 +237,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_039",
@@ -257,7 +265,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_029",
@@ -284,7 +293,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_028",
@@ -314,7 +324,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 3
     },
     {
       "id": "layer_027",
@@ -346,7 +357,8 @@
       ],
       "topAtdCount": 6,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 3
     },
     {
       "id": "layer_024",
@@ -375,7 +387,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 1
     },
     {
       "id": "layer_023",
@@ -404,7 +417,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 1
     },
     {
       "id": "layer_025",
@@ -433,7 +447,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 1
     },
     {
       "id": "layer_026",
@@ -463,7 +478,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 3
     },
     {
       "id": "layer_030",
@@ -490,7 +506,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_022",
@@ -510,7 +527,7 @@
       ],
       "projectionMode": "4326",
       "uncertainCount": 2,
-      "displayTitle": "1745 — уездные границы",
+      "displayTitle": "1745 — Сибирская губерния: уезды и провинции",
       "categoryLabel": "Административные границы",
       "topAtdValues": [
         "Зона неустойчивого контроля",
@@ -519,7 +536,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_021",
@@ -539,7 +557,7 @@
       ],
       "projectionMode": "4326",
       "uncertainCount": 2,
-      "displayTitle": "1765 — уездные границы",
+      "displayTitle": "1765 — Сибирская губерния: уезды и провинции",
       "categoryLabel": "Административные границы",
       "topAtdValues": [
         "Зона спорной принадлежности",
@@ -548,11 +566,12 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_020",
-      "title": "020_Границы_Колыванская_область_1780_1782_Контев_Только_колыванская_область",
+      "title": "Колыванская область",
       "file": "data/layers/020_020_Границы_Колыванская_область_1780_1782_Контев_Только_колыванская_область.geojson",
       "year": 1780,
       "timeLabel": "1780–1782",
@@ -575,7 +594,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 3
     },
     {
       "id": "layer_019",
@@ -604,7 +624,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_018",
@@ -631,7 +652,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 4
     },
     {
       "id": "layer_017",
@@ -661,7 +683,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 7
     },
     {
       "id": "layer_015",
@@ -690,7 +713,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_016",
@@ -718,7 +742,8 @@
       ],
       "topAtdCount": 2,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_014",
@@ -748,7 +773,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 9
     },
     {
       "id": "layer_013",
@@ -778,7 +804,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_012",
@@ -807,7 +834,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 2
     },
     {
       "id": "layer_011",
@@ -838,7 +866,8 @@
       ],
       "topAtdCount": 5,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 1
     },
     {
       "id": "layer_010",
@@ -869,7 +898,8 @@
       ],
       "topAtdCount": 5,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_007",
@@ -899,7 +929,8 @@
       ],
       "topAtdCount": 4,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_008",
@@ -930,7 +961,8 @@
       ],
       "topAtdCount": 5,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_009",
@@ -957,7 +989,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_004",
@@ -984,7 +1017,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_005",
@@ -1011,7 +1045,8 @@
       ],
       "topAtdCount": 1,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_006",
@@ -1042,7 +1077,8 @@
       ],
       "topAtdCount": 5,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     },
     {
       "id": "layer_003",
@@ -1071,7 +1107,8 @@
       ],
       "topAtdCount": 3,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 1
     },
     {
       "id": "layer_002",
@@ -1104,7 +1141,8 @@
       ],
       "topAtdCount": 7,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 3
     },
     {
       "id": "layer_001",
@@ -1145,7 +1183,8 @@
       ],
       "topAtdCount": 15,
       "displayField": "_display_name",
-      "topAtdField": "_display_top_atd"
+      "topAtdField": "_display_top_atd",
+      "uncertaintyCount": 0
     }
   ],
   "categories": {
@@ -1158,13 +1197,19 @@
   "defaultMode": "top",
   "fieldLabels": {
     "_display_name": "Объект",
-    "_display_top_atd": "Верхний уровень АТД",
-    "_display_mid_atd": "Средний уровень АТД",
+    "_display_top_atd": "Высший уровень АТД",
+    "_display_mid_atd": "Средний уровень АТД / провинция",
     "_display_low_atd": "Низовой уровень / объект",
     "_display_unit_type": "Тип единицы",
     "_display_capital": "Центр",
     "_display_population": "Население",
     "_display_hierarchy": "Иерархия",
-    "_display_status": "Статус реконструкции"
-  }
+    "_display_status": "Статус реконструкции",
+    "_display_map_atd": "Отображаемый уровень АТД",
+    "_province_affiliation": "Провинциальная принадлежность",
+    "_province_note": "Примечание к провинциальной принадлежности",
+    "_uncertain_label": "Тип неопределённости",
+    "_name_note": "Примечание к названию"
+  },
+  "notes": "v6: corrected Kuznetsk uezd in 1780–1782; filled province/middle-level attribution before 1780; fixed hatching rendering with transparent uncertain outlines."
 }

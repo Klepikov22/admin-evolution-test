@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '5.0-top-atd';
+const VERSION = '6.0-province-hatch-fix';
 const $ = (id) => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -64,14 +64,18 @@ const statusColors = {
 
 const fieldLabels = {
   _display_name: 'Объект',
-  _display_top_atd: 'Верхний уровень АТД',
-  _display_mid_atd: 'Средний уровень АТД',
+  _display_map_atd: 'Отображаемый уровень АТД',
+  _display_top_atd: 'Высший уровень АТД',
+  _display_mid_atd: 'Средний уровень АТД / провинция',
   _display_low_atd: 'Низовой уровень / объект',
   _display_unit_type: 'Тип единицы',
   _display_capital: 'Центр',
   _display_population: 'Население',
   _display_hierarchy: 'Иерархия',
   _display_status: 'Статус реконструкции',
+  _province_affiliation: 'Провинциальная принадлежность',
+  _province_note: 'Примечание к провинциальной принадлежности',
+  _name_note: 'Примечание к названию',
   _time_label: 'Период',
   _start_year: 'Начало',
   _end_year: 'Окончание',
@@ -155,12 +159,13 @@ function getName(f){
 }
 function getTopAtd(f){ return (f.properties || {})._display_top_atd || 'Не указано'; }
 function getMidAtd(f){ return (f.properties || {})._display_mid_atd || ''; }
+function getMapAtd(f){ return (f.properties || {})._display_map_atd || getMidAtd(f) || getTopAtd(f) || 'Не указано'; }
 function getType(f){ return (f.properties || {})._display_unit_type || (f.properties || {})._unit_type || (f.properties || {}).featurecla || 'Не указано'; }
 function isUncertain(f){ return Number((f.properties || {})._uncertain) === 1 || Number((f.properties || {})._hatch) === 1; }
 
 function styleValue(f){
   const mode = dom.mode.value;
-  if(mode === 'top') return getTopAtd(f);
+  if(mode === 'top') return getMapAtd(f);
   if(mode === 'mid') return getMidAtd(f) || getTopAtd(f);
   if(mode === 'type') return getType(f);
   if(mode === 'uncertain') return isUncertain(f) ? ((f.properties || {})._uncertain_label || 'Спорная / неясная зона') : 'Обычная принадлежность';
@@ -175,17 +180,22 @@ function featureStyle(f, previous=false){
   if(dom.mode.value === 'uncertain') fill = isUncertain(f) ? statusColors.uncertain : statusColors.normal;
   else if(dom.mode.value !== 'single') fill = colorFor(styleValue(f));
   const uncertain = isUncertain(f);
+  // Спорные / двоеданческие / неясные полигоны не получают собственного внешнего контура.
+  // Их читаем через штриховку, а базовая заливка оставлена очень лёгкой.
+  if(uncertain && !isPointFeature(f)){
+    return {color:'transparent', weight:0, opacity:0, fillColor:fill, fillOpacity:.12};
+  }
   return {
-    color: uncertain ? '#7c2d12' : '#263746',
-    weight: uncertain ? 1.05 : 1.35,
-    opacity: .98,
-    fillColor: fill,
-    fillOpacity: uncertain ? .26 : .46,
+    color:'#263746',
+    weight:1.35,
+    opacity:.98,
+    fillColor:fill,
+    fillOpacity:.46,
   };
 }
 
 function selectedOutlineStyle(){
-  return {color:'#a65b00', weight:3.4, opacity:1, fillOpacity:.08};
+  return {color:'#a65b00', weight:3.4, opacity:1, fillOpacity:0};
 }
 
 function pointStyle(f, previous=false){
@@ -221,7 +231,7 @@ function onEach(previous=false){
     if(!previous){
       l.on('click', () => selectFeature(f,l));
       if(l.setStyle){
-        l.on('mouseover', () => { if(state.selectedLayer !== l) l.setStyle({weight:2.7, fillOpacity:.56}); });
+        l.on('mouseover', () => { if(state.selectedLayer !== l) l.setStyle(isUncertain(f) && !isPointFeature(f) ? {color:'transparent', weight:0, opacity:0, fillOpacity:.20} : {weight:2.7, fillOpacity:.56}); });
         l.on('mouseout', () => { if(state.selectedLayer !== l) l.setStyle(featureStyle(f,false)); });
       }
     }
@@ -250,22 +260,52 @@ async function drawPrevious(){
   }).addTo(state.map);
 }
 
-function ensureHatch(){
-  const svg = document.querySelector('#map .leaflet-overlay-pane svg');
-  if(!svg || svg.querySelector('#simpleHatch')) return;
-  const ns = 'http://www.w3.org/2000/svg';
-  const defs = document.createElementNS(ns,'defs');
-  const p = document.createElementNS(ns,'pattern');
-  p.setAttribute('id','simpleHatch');
-  p.setAttribute('patternUnits','userSpaceOnUse');
-  p.setAttribute('width','8');
-  p.setAttribute('height','8');
-  p.setAttribute('patternTransform','rotate(45)');
-  const line = document.createElementNS(ns,'line');
-  line.setAttribute('x1','0'); line.setAttribute('y1','0'); line.setAttribute('x2','0'); line.setAttribute('y2','8');
-  line.setAttribute('stroke','#9a3412'); line.setAttribute('stroke-width','2'); line.setAttribute('opacity','.8');
-  p.appendChild(line); defs.appendChild(p); svg.insertBefore(defs, svg.firstChild);
+function hatchColor(f){
+  // Штриховку привязываем к ближайшему содержательному административному признаку: отображаемый уровень, затем верхний АТД.
+  // Это стабильнее, чем геометрический nearest-neighbour в браузере, и совпадает с цветом выверенной соседней группы.
+  return colorFor(getMapAtd(f) || getTopAtd(f) || 'Спорная зона');
 }
+
+function hatchId(color){
+  return 'hatch_' + String(color || '#999').replace(/[^a-zA-Z0-9]/g,'');
+}
+
+function ensureHatchPatterns(features){
+  const svgs = document.querySelectorAll('#map .leaflet-overlay-pane svg');
+  if(!svgs.length) return;
+  const colors = [...new Set((features || []).map(hatchColor))];
+  const ns = 'http://www.w3.org/2000/svg';
+  svgs.forEach(svg => {
+    let defs = svg.querySelector('defs');
+    if(!defs){
+      defs = document.createElementNS(ns,'defs');
+      svg.insertBefore(defs, svg.firstChild);
+    }
+    colors.forEach(color => {
+      const id = hatchId(color);
+      if(defs.querySelector('#' + id)) return;
+      const pat = document.createElementNS(ns,'pattern');
+      pat.setAttribute('id', id);
+      pat.setAttribute('patternUnits','userSpaceOnUse');
+      pat.setAttribute('width','9');
+      pat.setAttribute('height','9');
+      pat.setAttribute('patternTransform','rotate(45)');
+      const bg = document.createElementNS(ns,'rect');
+      bg.setAttribute('x','0'); bg.setAttribute('y','0'); bg.setAttribute('width','9'); bg.setAttribute('height','9');
+      bg.setAttribute('fill','#ffffff'); bg.setAttribute('opacity','.05');
+      const line = document.createElementNS(ns,'line');
+      line.setAttribute('x1','0'); line.setAttribute('y1','0'); line.setAttribute('x2','0'); line.setAttribute('y2','9');
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width','1.6');
+      line.setAttribute('opacity','.62');
+      pat.appendChild(bg);
+      pat.appendChild(line);
+      defs.appendChild(pat);
+    });
+  });
+}
+
+
 
 async function selectLayer(id){
   state.currentId = id;
@@ -287,8 +327,12 @@ async function selectLayer(id){
   if(dom.showHatch.checked){
     const hatch = {type:'FeatureCollection', features:(gj.features || []).filter(f => Number(f.properties?._hatch) === 1 && !isPointFeature(f))};
     if(hatch.features.length){
-      state.hatchLayer = L.geoJSON(hatch, {pane:'hatchPane', interactive:false, style:() => ({color:'transparent', weight:0, opacity:0, fillColor:'url(#simpleHatch)', fillOpacity:.85})}).addTo(state.map);
-      setTimeout(ensureHatch, 0);
+      state.hatchLayer = L.geoJSON(hatch, {
+        pane:'hatchPane',
+        interactive:false,
+        style:f => ({color:'transparent', weight:0, opacity:0, fillColor:`url(#${hatchId(hatchColor(f))})`, fillOpacity:.72})
+      }).addTo(state.map);
+      setTimeout(() => ensureHatchPatterns(hatch.features), 0);
     }
   }
   renderPanels(gj);
@@ -338,7 +382,7 @@ function selectFeature(f,l){
 
 function renderFeature(f){
   const p = f.properties || {};
-  const rows = ['_display_hierarchy','_display_top_atd','_display_mid_atd','_display_unit_type','_display_capital','_display_population','_display_status','_source_file']
+  const rows = ['_display_hierarchy','_display_map_atd','_display_top_atd','_display_mid_atd','_province_note','_display_unit_type','_display_capital','_display_population','_display_status','_source_file']
     .map(k => `<div class="row"><span>${esc(labelForField(k))}</span><b>${esc(compact(p[k],220))}</b></div>`).join('');
   const badge = isUncertain(f) ? `<span class="badge warn">спорная / неясная зона</span>` : `<span class="badge">обычный объект</span>`;
   dom.featureInfo.innerHTML = `${badge}<div class="infoTitle">${esc(getName(f))}</div>${rows}`;
@@ -404,9 +448,9 @@ function renderTable(feats){
   const q = (dom.search.value || '').toLowerCase();
   const shown = feats.filter(f => !q || JSON.stringify(f.properties || {}).toLowerCase().includes(q)).slice(0,250);
   const rows = shown.map((f,i) => {
-    return `<tr data-i="${i}"><td>${i+1}</td><td>${esc(compact(getName(f),70))}</td><td>${esc(compact(getTopAtd(f),70))}</td><td>${esc(compact(getMidAtd(f),60))}</td><td>${esc(compact(getType(f),45))}</td><td>${esc(isUncertain(f) ? ((f.properties||{})._uncertain_label || 'да') : '—')}</td></tr>`;
+    return `<tr data-i="${i}"><td>${i+1}</td><td>${esc(compact(getName(f),70))}</td><td>${esc(compact(getMapAtd(f),70))}</td><td>${esc(compact(getMidAtd(f),60))}</td><td>${esc(compact(getType(f),45))}</td><td>${esc(isUncertain(f) ? ((f.properties||{})._uncertain_label || 'да') : '—')}</td></tr>`;
   }).join('');
-  dom.table.innerHTML = `<table class="attrTable"><thead><tr><th>#</th><th>Объект</th><th>Верхний уровень</th><th>Средний уровень</th><th>Тип</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table><div class="muted tableHint">Показано ${shown.length} из ${feats.length}. Для выделения на карте кликни по объекту.</div>`;
+  dom.table.innerHTML = `<table class="attrTable"><thead><tr><th>#</th><th>Объект</th><th>На карте</th><th>Средний уровень</th><th>Тип</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table><div class="muted tableHint">Показано ${shown.length} из ${feats.length}. Для выделения на карте кликни по объекту.</div>`;
   dom.table.querySelectorAll('tr[data-i]').forEach(tr => tr.addEventListener('click', () => renderFeature(shown[Number(tr.dataset.i)])));
 }
 
