@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '6.0-province-hatch-fix';
+const VERSION = '7.0-print-layout-hatch-canvas';
 const $ = (id) => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -21,6 +21,9 @@ const state = {
   colors: new Map(),
   selectedLayer: null,
   selectedFeature: null,
+  graticuleLayer: null,
+  graticuleLabels: null,
+  print: { active:false, originalParent:null, originalNext:null },
 };
 
 const dom = {
@@ -48,6 +51,28 @@ const dom = {
   table: $('tableBox'),
   search: $('tableSearch'),
   legend: $('legendBox'),
+  exportMode: $('exportModeBtn'),
+  printWorkspace: $('printWorkspace'),
+  exitPrint: $('exitPrintBtn'),
+  printMapFrame: $('printMapFrame'),
+  printMapSlot: $('printMapSlot'),
+  printTitle: $('printTitleInput'),
+  printTitleBox: $('printTitleBox'),
+  paperFormat: $('paperFormatSelect'),
+  paperOrientation: $('paperOrientationSelect'),
+  printDpi: $('printDpiSelect'),
+  showPrintLegend: $('showPrintLegend'),
+  showPrintScale: $('showPrintScale'),
+  showPrintNorth: $('showPrintNorth'),
+  showPrintGrid: $('showPrintGrid'),
+  showPrintSource: $('showPrintSource'),
+  printLegend: $('printLegend'),
+  printScale: $('printScaleBar'),
+  printNorth: $('printNorthArrow'),
+  printSource: $('printSourceBox'),
+  printPage: $('printPage'),
+  browserPrint: $('browserPrintBtn'),
+  pngExport: $('pngExportBtn'),
 };
 
 const palette = [
@@ -161,7 +186,17 @@ function getTopAtd(f){ return (f.properties || {})._display_top_atd || 'Не у�
 function getMidAtd(f){ return (f.properties || {})._display_mid_atd || ''; }
 function getMapAtd(f){ return (f.properties || {})._display_map_atd || getMidAtd(f) || getTopAtd(f) || 'Не указано'; }
 function getType(f){ return (f.properties || {})._display_unit_type || (f.properties || {})._unit_type || (f.properties || {}).featurecla || 'Не указано'; }
-function isUncertain(f){ return Number((f.properties || {})._uncertain) === 1 || Number((f.properties || {})._hatch) === 1; }
+
+function isUncertain(f){
+  const p = f.properties || {};
+  if(Number(p._uncertain) === 1 || Number(p._hatch) === 1) return true;
+  const text = [p._display_status, p._uncertain_label, p._display_name, p.Notes, p.Note, p.note, p.Status]
+    .map(v => String(v || '').toLowerCase())
+    .join(' ');
+  if(/выверенн|обычн|уточнен|уточнён/.test(text) && !/двоедан/.test(text)) return false;
+  return /(спорн|неясн|неустойчив|двоедан|двое\s*дан|переходн|особый статус|особая зона)/.test(text);
+}
+
 
 function styleValue(f){
   const mode = dom.mode.value;
@@ -209,6 +244,92 @@ function pointStyle(f, previous=false){
     opacity: .98,
   };
 }
+
+
+const HatchCanvasLayer = L.Layer.extend({
+  initialize(features, colorFn, options={}){
+    this.features = features || [];
+    this.colorFn = colorFn || (() => '#777');
+    this.options = Object.assign({spacing:10, lineWidth:1.25, opacity:.42}, options);
+  },
+  onAdd(map){
+    this._map = map;
+    this._canvas = L.DomUtil.create('canvas', 'hatch-canvas-layer');
+    this._canvas.style.pointerEvents = 'none';
+    this._canvas.style.position = 'absolute';
+    const pane = map.getPane('hatchPane') || map.getPanes().overlayPane;
+    pane.appendChild(this._canvas);
+    map.on('move zoom resize viewreset', this._reset, this);
+    this._reset();
+  },
+  onRemove(map){
+    map.off('move zoom resize viewreset', this._reset, this);
+    if(this._canvas) L.DomUtil.remove(this._canvas);
+    this._canvas = null;
+  },
+  _reset(){
+    if(!this._map || !this._canvas) return;
+    const size = this._map.getSize();
+    const retina = window.devicePixelRatio || 1;
+    this._canvas.width = Math.max(1, Math.round(size.x * retina));
+    this._canvas.height = Math.max(1, Math.round(size.y * retina));
+    this._canvas.style.width = size.x + 'px';
+    this._canvas.style.height = size.y + 'px';
+    const topLeft = this._map.containerPointToLayerPoint([0,0]);
+    L.DomUtil.setPosition(this._canvas, topLeft);
+    const ctx = this._canvas.getContext('2d');
+    ctx.setTransform(retina,0,0,retina,0,0);
+    ctx.clearRect(0,0,size.x,size.y);
+    this._draw(ctx, size);
+  },
+  _ringsForFeature(feature){
+    const g = feature.geometry || {};
+    if(g.type === 'Polygon') return [g.coordinates || []];
+    if(g.type === 'MultiPolygon') return g.coordinates || [];
+    return [];
+  },
+  _draw(ctx, size){
+    const spacing = this.options.spacing;
+    const alpha = this.options.opacity;
+    for(const feature of this.features){
+      const polys = this._ringsForFeature(feature);
+      if(!polys.length) continue;
+      const color = this.colorFn(feature) || '#777';
+      for(const rings of polys){
+        if(!rings || !rings.length) continue;
+        ctx.save();
+        ctx.beginPath();
+        let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+        rings.forEach(ring => {
+          if(!ring || ring.length < 3) return;
+          ring.forEach((xy, i) => {
+            const pt = this._map.latLngToContainerPoint([xy[1], xy[0]]);
+            if(i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+            if(pt.x < minX) minX = pt.x; if(pt.y < minY) minY = pt.y;
+            if(pt.x > maxX) maxX = pt.x; if(pt.y > maxY) maxY = pt.y;
+          });
+          ctx.closePath();
+        });
+        if(!Number.isFinite(minX)) { ctx.restore(); continue; }
+        ctx.clip('evenodd');
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = this.options.lineWidth;
+        const span = (maxX-minX) + (maxY-minY) + 80;
+        const start = Math.floor((minX - maxY - 80) / spacing) * spacing;
+        const end = Math.ceil((maxX - minY + 80) / spacing) * spacing;
+        for(let d=start; d<=end; d+=spacing){
+          ctx.beginPath();
+          ctx.moveTo(d + minY - 40, minY - 40);
+          ctx.lineTo(d + maxY + 40, maxY + 40);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+  }
+});
+L.hatchCanvasLayer = (features, colorFn, options) => new HatchCanvasLayer(features, colorFn, options);
 
 function popup(f){
   const p = f.properties || {};
@@ -325,26 +446,23 @@ async function selectLayer(id){
     onEachFeature:onEach(false)
   }).addTo(state.map);
   if(dom.showHatch.checked){
-    const hatch = {type:'FeatureCollection', features:(gj.features || []).filter(f => Number(f.properties?._hatch) === 1 && !isPointFeature(f))};
-    if(hatch.features.length){
-      state.hatchLayer = L.geoJSON(hatch, {
-        pane:'hatchPane',
-        interactive:false,
-        style:f => ({color:'transparent', weight:0, opacity:0, fillColor:`url(#${hatchId(hatchColor(f))})`, fillOpacity:.72})
-      }).addTo(state.map);
-      setTimeout(() => ensureHatchPatterns(hatch.features), 0);
+    const hatchFeatures = (gj.features || []).filter(f => isUncertain(f) && !isPointFeature(f));
+    if(hatchFeatures.length){
+      state.hatchLayer = L.hatchCanvasLayer(hatchFeatures, hatchColor, {spacing:9, lineWidth:1.15, opacity:.46}).addTo(state.map);
     }
   }
   renderPanels(gj);
   fitCurrentLayer(false);
   setStatus(`Активно: <b>${esc(state.currentMeta.timeLabel)}</b> · ${esc(displayTitle(state.currentMeta))} · объектов: ${fmt.format(state.currentMeta.featureCount)}`);
+  updatePrintLayoutElements();
 }
+
 
 function fitCurrentLayer(animated=true){
   const l = state.currentLayer;
   if(!l) return;
   const b = l.getBounds?.();
-  if(b && b.isValid()) state.map.fitBounds(b, {padding:[28,28], maxZoom:7, animate:animated});
+  if(b && b.isValid()) { state.map.fitBounds(b, {padding:[28,28], maxZoom:7, animate:animated}); setTimeout(updatePrintLayoutElements, 60); }
 }
 
 async function drawHydro(){
@@ -415,9 +533,15 @@ function renderLegend(feats){
   const rows = [...groups.entries()]
     .sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0],'ru'))
     .slice(0,24)
-    .map(([name,count]) => `<div class="legendRow"><span class="legendSwatch" style="background:${esc(dom.mode.value==='uncertain' ? (name.includes('Обычная') ? statusColors.normal : statusColors.uncertain) : colorFor(name))}"></span><span title="${esc(name)}">${esc(compact(name,80))}</span><b>${fmt.format(count)}</b></div>`)
+    .map(([name,count]) => {
+      const color = dom.mode.value==='uncertain' ? (name.includes('Обычная') ? statusColors.normal : statusColors.uncertain) : colorFor(name);
+      return `<div class="legendRow"><span class="legendSwatch" style="background:${esc(color)}"></span><span title="${esc(name)}">${esc(compact(name,80))}</span><b>${fmt.format(count)}</b></div>`;
+    })
     .join('');
-  dom.legend.innerHTML = rows || '<div class="muted">Нет данных для легенды.</div>';
+  const hatchCount = feats.filter(f => isUncertain(f) && !isPointFeature(f)).length;
+  const hatchRow = hatchCount ? `<div class="legendRow specialLegend"><span class="legendSwatch hatchSwatch"></span><span>Особый статус / спорная зона</span><b>${fmt.format(hatchCount)}</b></div>` : '';
+  dom.legend.innerHTML = (rows + hatchRow) || '<div class="muted">Нет данных для легенды.</div>';
+  updatePrintLayoutElements();
 }
 
 function schemaStats(feats){
@@ -516,6 +640,121 @@ function renderRadios(){
   });
 }
 
+
+function buildGraticule(){
+  clearGraticule();
+  if(!state.map || !dom.showPrintGrid?.checked) return;
+  const b = state.map.getBounds();
+  const lonSpan = Math.abs(b.getEast() - b.getWest());
+  const latSpan = Math.abs(b.getNorth() - b.getSouth());
+  const step = Math.max(1, Math.round(Math.max(lonSpan,latSpan)/6));
+  const lon0 = Math.ceil(b.getWest()/step)*step;
+  const lat0 = Math.ceil(b.getSouth()/step)*step;
+  state.graticuleLayer = L.layerGroup().addTo(state.map);
+  state.graticuleLabels = L.layerGroup().addTo(state.map);
+  for(let lon=lon0; lon<=b.getEast(); lon+=step){
+    const pts=[];
+    for(let i=0;i<=80;i++){
+      const lat=b.getSouth()+(b.getNorth()-b.getSouth())*i/80;
+      pts.push([lat,lon]);
+    }
+    L.polyline(pts,{interactive:false,color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
+    L.marker([b.getSouth()+latSpan*.02, lon],{interactive:false,icon:L.divIcon({className:'gridLabel',html:`${Math.round(lon)}°E`,iconSize:[46,16],iconAnchor:[23,8]})}).addTo(state.graticuleLabels);
+  }
+  for(let lat=lat0; lat<=b.getNorth(); lat+=step){
+    const pts=[];
+    for(let i=0;i<=100;i++){
+      const lon=b.getWest()+(b.getEast()-b.getWest())*i/100;
+      pts.push([lat,lon]);
+    }
+    L.polyline(pts,{interactive:false,color:'#475569',weight:.7,opacity:.34,dashArray:'2 5'}).addTo(state.graticuleLayer);
+    L.marker([lat, b.getWest()+lonSpan*.02],{interactive:false,icon:L.divIcon({className:'gridLabel',html:`${Math.round(lat)}°N`,iconSize:[46,16],iconAnchor:[23,8]})}).addTo(state.graticuleLabels);
+  }
+}
+function clearGraticule(){
+  if(state.graticuleLayer){ state.map.removeLayer(state.graticuleLayer); state.graticuleLayer=null; }
+  if(state.graticuleLabels){ state.map.removeLayer(state.graticuleLabels); state.graticuleLabels=null; }
+}
+function metersPerPixelAtCenter(){
+  if(!state.map) return 1;
+  const center = state.map.getCenter();
+  const p1 = state.map.latLngToContainerPoint(center);
+  const p2 = L.point(p1.x + 100, p1.y);
+  const ll2 = state.map.containerPointToLatLng(p2);
+  return center.distanceTo(ll2) / 100;
+}
+function niceDistance(m){
+  const pow = Math.pow(10, Math.floor(Math.log10(Math.max(1,m))));
+  const n = m / pow;
+  if(n < 2) return pow;
+  if(n < 5) return 2*pow;
+  return 5*pow;
+}
+function updateScaleBar(){
+  if(!dom.printScale || !state.print.active) return;
+  const targetPx = 160;
+  const meters = niceDistance(metersPerPixelAtCenter() * targetPx);
+  const widthPx = Math.max(40, Math.round(meters / metersPerPixelAtCenter()));
+  dom.printScale.innerHTML = `<div class="scaleBarLine" style="width:${widthPx}px"></div><b>${meters>=1000 ? (meters/1000)+' км' : meters+' м'}</b>`;
+}
+function applyPaperSettings(){
+  if(!dom.printPage) return;
+  const format = dom.paperFormat?.value || 'a4';
+  const orient = dom.paperOrientation?.value || 'landscape';
+  dom.printPage.dataset.format = format;
+  dom.printPage.dataset.orientation = orient;
+  const title = dom.printTitle?.value || (state.currentMeta ? `${state.currentMeta.timeLabel} — ${displayTitle(state.currentMeta)}` : 'Карта');
+  if(dom.printTitleBox) dom.printTitleBox.textContent = title;
+}
+function updatePrintLayoutElements(){
+  if(!state.print.active) return;
+  applyPaperSettings();
+  if(dom.printLegend && dom.legend){ dom.printLegend.innerHTML = `<h3>Легенда</h3>${dom.legend.innerHTML}`; dom.printLegend.style.display = dom.showPrintLegend?.checked ? 'block' : 'none'; }
+  if(dom.printNorth) dom.printNorth.style.display = dom.showPrintNorth?.checked ? 'grid' : 'none';
+  if(dom.printScale){ dom.printScale.style.display = dom.showPrintScale?.checked ? 'flex' : 'none'; updateScaleBar(); }
+  if(dom.printSource){
+    dom.printSource.style.display = dom.showPrintSource?.checked ? 'block' : 'none';
+    dom.printSource.textContent = `Срез: ${state.currentMeta?.timeLabel || '—'} · ${displayTitle(state.currentMeta)} · источник: ${state.currentMeta?.file || ''}`;
+  }
+  if(dom.showPrintGrid?.checked) buildGraticule(); else clearGraticule();
+}
+function enterPrintMode(){
+  if(state.print.active || !dom.printWorkspace || !dom.printMapSlot) return;
+  state.print.originalParent = $('app');
+  const mapEl = $('map');
+  state.print.originalNext = mapEl.nextSibling;
+  document.body.classList.add('print-mode');
+  dom.printWorkspace.classList.remove('hidden');
+  applyPaperSettings();
+  dom.printMapSlot.appendChild(mapEl);
+  state.print.active = true;
+  setTimeout(()=>{
+    state.map.invalidateSize(false);
+    fitCurrentLayer(false);
+    updatePrintLayoutElements();
+  },80);
+}
+function exitPrintMode(){
+  if(!state.print.active) return;
+  clearGraticule();
+  const mapEl = $('map');
+  if(state.print.originalNext) state.print.originalParent.insertBefore(mapEl, state.print.originalNext);
+  else state.print.originalParent.insertBefore(mapEl, state.print.originalParent.firstChild);
+  dom.printWorkspace.classList.add('hidden');
+  document.body.classList.remove('print-mode');
+  state.print.active = false;
+  setTimeout(()=>{ state.map.invalidateSize(false); fitCurrentLayer(false); },80);
+}
+async function exportPrintPng(){
+  if(!window.html2canvas){ window.print(); return; }
+  updatePrintLayoutElements();
+  const canvas = await html2canvas(dom.printPage, {backgroundColor:'#ffffff', scale:2, useCORS:true});
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `admin-map-${state.currentMeta?.timeLabel || 'layout'}.png`.replace(/\s+/g,'_');
+  a.click();
+}
+
 function bind(){
   dom.category.addEventListener('change', () => { applyCategory(); selectLayer(state.currentId); });
   dom.layerSelect.addEventListener('change', e => selectLayer(e.target.value));
@@ -535,6 +774,14 @@ function bind(){
     a.click();
   });
   dom.search.addEventListener('input', () => state.currentJson && renderTable(state.currentJson.features || []));
+  dom.exportMode?.addEventListener('click', enterPrintMode);
+  dom.exitPrint?.addEventListener('click', exitPrintMode);
+  [dom.printTitle, dom.paperFormat, dom.paperOrientation, dom.printDpi, dom.showPrintLegend, dom.showPrintScale, dom.showPrintNorth, dom.showPrintGrid, dom.showPrintSource]
+    .filter(Boolean)
+    .forEach(el => el.addEventListener('input', updatePrintLayoutElements));
+  dom.browserPrint?.addEventListener('click', () => { updatePrintLayoutElements(); window.print(); });
+  dom.pngExport?.addEventListener('click', exportPrintPng);
+  state.map.on('moveend zoomend', () => { if(state.print.active) updatePrintLayoutElements(); });
 }
 
 async function init(){
