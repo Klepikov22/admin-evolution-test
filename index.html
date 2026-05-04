@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v11 · адаптивная рамка экспорта</div>
+      <div class="eyebrow">v12 · lambert print fit</div>
       <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
 
@@ -138,7 +138,7 @@
       <button id="exitPrintBtn" type="button" class="secondaryAction">Вернуться к дашборду</button>
 
       <p class="printNote">
-        Рамка картографического поля теперь автоматически подстраивается под форму активного слоя / выборки. Для вертикальных объектов она становится уже, для горизонтальных — ниже. При этом сверху и снизу сохраняется минимум 100 px, а боковые поля не раздуваются более чем примерно до 400 px.
+        В режиме компоновки карта и подбор рамки теперь опираются на равноугольную коническую проекцию Ламберта для Западной Сибири. Это должно лучше удерживать северную часть в пределах картографического поля и аккуратнее подгонять форму рамки под слой или выборку.
       </p>
     </aside>
 
@@ -181,7 +181,9 @@
   </section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+  <script src="https://unpkg.com/proj4leaflet@1.0.2/src/proj4leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js?v=11"></script>
+  <script src="js/app.js?v=12"></script>
 </body>
 </html>
