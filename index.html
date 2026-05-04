@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v8 · карта + компоновка</div>
+      <div class="eyebrow">v9 · карта + точный экспорт</div>
       <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
+
       <button id="exportModeBtn" type="button" class="primaryAction">Экспорт / печать</button>
 
       <label>Категория слоёв</label>
@@ -40,7 +41,7 @@
       </select>
 
       <div class="checks">
-        <label><input id="showWater" type="checkbox" checked> Океан и озёра без водохранилищ</label>
+        <label><input id="showWater" type="checkbox" checked> Океан и озёра</label>
         <label><input id="showRivers" type="checkbox" checked> Реки</label>
         <label><input id="showPrevious" type="checkbox"> Предыдущий срез пунктиром</label>
         <label><input id="showHatch" type="checkbox" checked> Штриховка спорных зон</label>
@@ -75,7 +76,7 @@
       <section id="legendBox" class="box legendBox">—</section>
 
       <h2>Объект</h2>
-      <section id="featureInfo" class="box muted">Кликни по полигону / объекту.</section>
+      <section id="featureInfo" class="box muted">Кликни по объекту.</section>
 
       <h2>Поля</h2>
       <section id="schemaInfo" class="box scrollBox">—</section>
@@ -90,13 +91,33 @@
     <aside class="printPanel">
       <div class="eyebrow">Print Layout Mode</div>
       <h2>Компоновка</h2>
+
       <label>Заголовок карты</label>
       <input id="printTitleInput" class="search" value="Эволюция административной сетки Западной Сибири">
 
       <div class="printGridControls">
-        <div><label>Формат</label><select id="paperFormatSelect"><option value="a4">A4</option><option value="a3" selected>A3</option></select></div>
-        <div><label>Ориентация</label><select id="paperOrientationSelect"><option value="landscape" selected>Альбомная</option><option value="portrait">Книжная</option></select></div>
-        <div><label>DPI</label><select id="printDpiSelect"><option>150</option><option selected>300</option><option>600</option></select></div>
+        <div>
+          <label>Формат</label>
+          <select id="paperFormatSelect">
+            <option value="a4">A4</option>
+            <option value="a3" selected>A3</option>
+          </select>
+        </div>
+        <div>
+          <label>Ориентация</label>
+          <select id="paperOrientationSelect">
+            <option value="landscape" selected>Альбомная</option>
+            <option value="portrait">Книжная</option>
+          </select>
+        </div>
+        <div>
+          <label>DPI</label>
+          <select id="printDpiSelect">
+            <option>150</option>
+            <option selected>300</option>
+            <option>600</option>
+          </select>
+        </div>
       </div>
 
       <div class="checks printChecks">
@@ -111,11 +132,14 @@
       <label>Размер подписей градусной сетки: <b id="printGridLabelSizeValue">11</b> px</label>
       <input id="printGridLabelSize" type="range" min="8" max="18" step="1" value="11">
 
-      <button id="browserPrintBtn" type="button">Печать / PDF через браузер</button>
-      <button id="pngExportBtn" type="button">Экспорт PNG</button>
+      <button id="fitPrintExtentBtn" type="button">Подогнать экспорт к слою / выборке</button>
+      <button id="browserPrintBtn" type="button">PDF / печать точным снимком</button>
+      <button id="pngExportBtn" type="button">Экспорт PNG точным снимком</button>
       <button id="exitPrintBtn" type="button" class="secondaryAction">Вернуться к дашборду</button>
 
-      <p class="printNote">Экспортный экстент теперь строится автоматически по выбранному слою или выделенному объекту с буфером. Блоки заголовка, контекста, сводки и легенды можно перетаскивать вокруг картографического поля.</p>
+      <p class="printNote">
+        Экспорт теперь делается как точный снимок текущего листа предпросмотра. Поэтому PNG и PDF должны совпадать с тем, что видно в режиме компоновки.
+      </p>
     </aside>
 
     <main class="printStage">
@@ -132,22 +156,22 @@
             </div>
           </section>
 
-          <section id="printTitleBox" class="printBox printTitle draggable" data-default-x="24" data-default-y="16">
+          <section id="printTitleBox" class="printBox printTitle draggable" data-default-x="26" data-default-y="22">
             <div class="dragHandle">Заголовок</div>
             <div id="printTitleText" class="printBoxBody titleBody">Эволюция административной сетки Западной Сибири</div>
           </section>
 
-          <section id="printSummary" class="printBox printSummary draggable" data-default-x="24" data-default-y="114">
+          <section id="printSummary" class="printBox printSummary draggable" data-default-x="26" data-default-y="138">
             <div class="dragHandle">Сводка</div>
             <div id="printSummaryBody" class="printBoxBody"></div>
           </section>
 
-          <section id="printLegend" class="printBox printLegend draggable" data-default-right="24" data-default-y="24">
+          <section id="printLegend" class="printBox printLegend draggable" data-default-right="26" data-default-y="30">
             <div class="dragHandle">Легенда</div>
             <div id="printLegendBody" class="printBoxBody"></div>
           </section>
 
-          <section id="printSourceBox" class="printBox printSource draggable" data-default-x="24" data-default-bottom="22">
+          <section id="printSourceBox" class="printBox printSource draggable" data-default-x="26" data-default-bottom="24">
             <div class="dragHandle">Контекст</div>
             <div id="printSourceText" class="printBoxBody"></div>
           </section>
@@ -158,6 +182,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>

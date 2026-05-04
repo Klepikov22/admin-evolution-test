@@ -1,6 +1,6 @@
 {
   "title": "Историческая административная сетка Западной Сибири",
-  "version": "6.0-province-hatch-fix",
+  "version": "9.0-print-exact-snapshot",
   "projectBounds": [
     55.17824915611141,
     49.333494966359574,
@@ -19,7 +19,7 @@
     {
       "id": "layer_031",
       "title": "031_Остроги17век_Buffer",
-      "file": "data/layers/031_031_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_031.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -47,7 +47,7 @@
     {
       "id": "layer_032",
       "title": "032_Остроги_17_век",
-      "file": "data/layers/032_032_Остроги_17_век.geojson",
+      "file": "data/layers/layer_032.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -75,7 +75,7 @@
     {
       "id": "layer_033",
       "title": "033_Остроги17век_Buffer",
-      "file": "data/layers/033_033_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_033.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -103,7 +103,7 @@
     {
       "id": "layer_034",
       "title": "034_Остроги17век_Buffer",
-      "file": "data/layers/034_034_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_034.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -131,7 +131,7 @@
     {
       "id": "layer_035",
       "title": "035_Остроги17век_Buffer",
-      "file": "data/layers/035_035_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_035.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -159,7 +159,7 @@
     {
       "id": "layer_036",
       "title": "036_Остроги_17_век",
-      "file": "data/layers/036_036_Остроги_17_век.geojson",
+      "file": "data/layers/layer_036.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -187,7 +187,7 @@
     {
       "id": "layer_037",
       "title": "037_Остроги17век_Buffer",
-      "file": "data/layers/037_037_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_037.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -215,7 +215,7 @@
     {
       "id": "layer_038",
       "title": "038_Остроги17век_Buffer",
-      "file": "data/layers/038_038_Остроги17век_Buffer.geojson",
+      "file": "data/layers/layer_038.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -243,7 +243,7 @@
     {
       "id": "layer_039",
       "title": "039_17_век",
-      "file": "data/layers/039_039_17_век.geojson",
+      "file": "data/layers/layer_039.geojson",
       "year": 1650,
       "timeLabel": "XVII век",
       "startYear": 1600,
@@ -271,7 +271,7 @@
     {
       "id": "layer_029",
       "title": "029_уезды_1700_ист_атлас_россии_смеш_Контев_чистые_границы",
-      "file": "data/layers/029_029_уезды_1700_ист_атлас_россии_смеш_Контев_чистые_границы.geojson",
+      "file": "data/layers/layer_029.geojson",
       "year": 1700,
       "timeLabel": "1700",
       "startYear": 1700,
@@ -299,7 +299,7 @@
     {
       "id": "layer_028",
       "title": "028_Сиб_гов_уезд_границы_1719_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725",
-      "file": "data/layers/028_028_Сиб_гов_уезд_границы_1719_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725.geojson",
+      "file": "data/layers/layer_028.geojson",
       "year": 1719,
       "timeLabel": "1719",
       "startYear": 1719,
@@ -330,7 +330,7 @@
     {
       "id": "layer_027",
       "title": "027_Уездныеграницыпосле1724_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725_ExportFeatures",
-      "file": "data/layers/027_027_Уездныеграницыпосле1724_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725_ExportFeatures.geojson",
+      "file": "data/layers/layer_027.geojson",
       "year": 1724,
       "timeLabel": "1724",
       "startYear": 1724,
@@ -363,7 +363,7 @@
     {
       "id": "layer_024",
       "title": "024_Уездныеграницыпосле1725_БРЭ",
-      "file": "data/layers/024_024_Уездныеграницыпосле1725_БРЭ.geojson",
+      "file": "data/layers/layer_024.geojson",
       "year": 1725,
       "timeLabel": "1725",
       "startYear": 1725,
@@ -393,7 +393,7 @@
     {
       "id": "layer_023",
       "title": "023_Уездныеграницыпосле1726_БРЭ_слитно_с_юз_сибирью",
-      "file": "data/layers/023_023_Уездныеграницыпосле1726_БРЭ_слитно_с_юз_сибирью.geojson",
+      "file": "data/layers/layer_023.geojson",
       "year": 1726,
       "timeLabel": "1726",
       "startYear": 1726,
@@ -423,7 +423,7 @@
     {
       "id": "layer_025",
       "title": "025_Уездныеграницыпосле1726_БРЭ_отдельно_территория_перехода",
-      "file": "data/layers/025_025_Уездныеграницыпосле1726_БРЭ_отдельно_территория_перехода.geojson",
+      "file": "data/layers/layer_025.geojson",
       "year": 1726,
       "timeLabel": "1726",
       "startYear": 1726,
@@ -453,7 +453,7 @@
     {
       "id": "layer_026",
       "title": "026_Уездныеграницыпосле1727_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725_ExportFeatures_ExportFeatures",
-      "file": "data/layers/026_026_Уездныеграницыпосле1727_Микс_Ист_Атлас_Контев_1717_уезды_1700_девиант_1725_ExportFeatures_ExportFeatures.geojson",
+      "file": "data/layers/layer_026.geojson",
       "year": 1727,
       "timeLabel": "1727",
       "startYear": 1727,
@@ -484,7 +484,7 @@
     {
       "id": "layer_030",
       "title": "030_Границы_Колывано_Воскресенского_горного_ведомства_1735_1745_1750",
-      "file": "data/layers/030_030_Границы_Колывано_Воскресенского_горного_ведомства_1735_1745_1750.geojson",
+      "file": "data/layers/layer_030.geojson",
       "year": 1735,
       "timeLabel": "1735–1745",
       "startYear": 1735,
@@ -512,7 +512,7 @@
     {
       "id": "layer_022",
       "title": "022_Границы1745_уездные_чистовой",
-      "file": "data/layers/022_022_Границы1745_уездные_чистовой.geojson",
+      "file": "data/layers/layer_022.geojson",
       "year": 1745,
       "timeLabel": "1745",
       "startYear": 1745,
@@ -542,7 +542,7 @@
     {
       "id": "layer_021",
       "title": "021_Границы1765_чистовая_карта",
-      "file": "data/layers/021_021_Границы1765_чистовая_карта.geojson",
+      "file": "data/layers/layer_021.geojson",
       "year": 1765,
       "timeLabel": "1765",
       "startYear": 1765,
@@ -572,7 +572,7 @@
     {
       "id": "layer_020",
       "title": "Колыванская область",
-      "file": "data/layers/020_020_Границы_Колыванская_область_1780_1782_Контев_Только_колыванская_область.geojson",
+      "file": "data/layers/layer_020.geojson",
       "year": 1780,
       "timeLabel": "1780–1782",
       "startYear": 1780,
@@ -600,7 +600,7 @@
     {
       "id": "layer_019",
       "title": "019_Границы_Колыванская_губерния_1782_1797_Контев_БРЭ",
-      "file": "data/layers/019_019_Границы_Колыванская_губерния_1782_1797_Контев_БРЭ.geojson",
+      "file": "data/layers/layer_019.geojson",
       "year": 1782,
       "timeLabel": "1782–1797",
       "startYear": 1782,
@@ -630,7 +630,7 @@
     {
       "id": "layer_018",
       "title": "018_Границы1798_Тоб_губ5_БРЭ",
-      "file": "data/layers/018_018_Границы1798_Тоб_губ5_БРЭ.geojson",
+      "file": "data/layers/layer_018.geojson",
       "year": 1798,
       "timeLabel": "1798",
       "startYear": 1798,
@@ -658,7 +658,7 @@
     {
       "id": "layer_017",
       "title": "017_Уезды_1805_БРЭ",
-      "file": "data/layers/017_017_Уезды_1805_БРЭ.geojson",
+      "file": "data/layers/layer_017.geojson",
       "year": 1805,
       "timeLabel": "1805",
       "startYear": 1805,
@@ -689,7 +689,7 @@
     {
       "id": "layer_015",
       "title": "015_Границы1809_версия_сиб_1809_ист_атлас",
-      "file": "data/layers/015_015_Границы1809_версия_сиб_1809_ист_атлас.geojson",
+      "file": "data/layers/layer_015.geojson",
       "year": 1809,
       "timeLabel": "1809",
       "startYear": 1809,
@@ -719,7 +719,7 @@
     {
       "id": "layer_016",
       "title": "016_Границы1809_правленые",
-      "file": "data/layers/016_016_Границы1809_правленые.geojson",
+      "file": "data/layers/layer_016.geojson",
       "year": 1809,
       "timeLabel": "1809",
       "startYear": 1809,
@@ -748,7 +748,7 @@
     {
       "id": "layer_014",
       "title": "014_Уезды_1821_БРЭ",
-      "file": "data/layers/014_014_Уезды_1821_БРЭ.geojson",
+      "file": "data/layers/layer_014.geojson",
       "year": 1821,
       "timeLabel": "1821",
       "startYear": 1821,
@@ -779,7 +779,7 @@
     {
       "id": "layer_013",
       "title": "013_Границы1838_БРЭ_Контев",
-      "file": "data/layers/013_013_Границы1838_БРЭ_Контев.geojson",
+      "file": "data/layers/layer_013.geojson",
       "year": 1838,
       "timeLabel": "1838",
       "startYear": 1838,
@@ -810,7 +810,7 @@
     {
       "id": "layer_012",
       "title": "012_Границы1848_чистовые",
-      "file": "data/layers/012_012_Границы1848_чистовые.geojson",
+      "file": "data/layers/layer_012.geojson",
       "year": 1848,
       "timeLabel": "1848",
       "startYear": 1848,
@@ -840,7 +840,7 @@
     {
       "id": "layer_011",
       "title": "011_Границы1855_чистовые",
-      "file": "data/layers/011_011_Границы1855_чистовые.geojson",
+      "file": "data/layers/layer_011.geojson",
       "year": 1855,
       "timeLabel": "1855",
       "startYear": 1855,
@@ -872,7 +872,7 @@
     {
       "id": "layer_010",
       "title": "010_Границы1876_чистовые",
-      "file": "data/layers/010_010_Границы1876_чистовые.geojson",
+      "file": "data/layers/layer_010.geojson",
       "year": 1876,
       "timeLabel": "1876",
       "startYear": 1876,
@@ -904,7 +904,7 @@
     {
       "id": "layer_007",
       "title": "007_Статистика_население_1897",
-      "file": "data/layers/007_007_Статистика_население_1897.geojson",
+      "file": "data/layers/layer_007.geojson",
       "year": 1897,
       "timeLabel": "1897",
       "startYear": 1897,
@@ -935,7 +935,7 @@
     {
       "id": "layer_008",
       "title": "008_Границы_1897_правленные_с_населением",
-      "file": "data/layers/008_008_Границы_1897_правленные_с_населением.geojson",
+      "file": "data/layers/layer_008.geojson",
       "year": 1897,
       "timeLabel": "1897",
       "startYear": 1897,
@@ -967,7 +967,7 @@
     {
       "id": "layer_009",
       "title": "009_Границы_1897_правленные",
-      "file": "data/layers/009_009_Границы_1897_правленные.geojson",
+      "file": "data/layers/layer_009.geojson",
       "year": 1897,
       "timeLabel": "1897",
       "startYear": 1897,
@@ -995,7 +995,7 @@
     {
       "id": "layer_004",
       "title": "004_Статистика_население_1914",
-      "file": "data/layers/004_004_Статистика_население_1914.geojson",
+      "file": "data/layers/layer_004.geojson",
       "year": 1914,
       "timeLabel": "1914",
       "startYear": 1914,
@@ -1023,7 +1023,7 @@
     {
       "id": "layer_005",
       "title": "005_Границы_1914_правленный",
-      "file": "data/layers/005_005_Границы_1914_правленный.geojson",
+      "file": "data/layers/layer_005.geojson",
       "year": 1914,
       "timeLabel": "1914",
       "startYear": 1914,
@@ -1051,7 +1051,7 @@
     {
       "id": "layer_006",
       "title": "006_Границы_1914_с_населением",
-      "file": "data/layers/006_006_Границы_1914_с_населением.geojson",
+      "file": "data/layers/layer_006.geojson",
       "year": 1914,
       "timeLabel": "1914",
       "startYear": 1914,
@@ -1083,7 +1083,7 @@
     {
       "id": "layer_003",
       "title": "003_Алтайская_губерния_1918_готово",
-      "file": "data/layers/003_003_Алтайская_губерния_1918_готово.geojson",
+      "file": "data/layers/layer_003.geojson",
       "year": 1918,
       "timeLabel": "1918",
       "startYear": 1918,
@@ -1113,7 +1113,7 @@
     {
       "id": "layer_002",
       "title": "002_Границы_1923_правленные",
-      "file": "data/layers/002_002_Границы_1923_правленные.geojson",
+      "file": "data/layers/layer_002.geojson",
       "year": 1923,
       "timeLabel": "1923",
       "startYear": 1923,
@@ -1147,7 +1147,7 @@
     {
       "id": "layer_001",
       "title": "001_Границы_1930",
-      "file": "data/layers/001_001_Границы_1930.geojson",
+      "file": "data/layers/layer_001.geojson",
       "year": 1930,
       "timeLabel": "1930",
       "startYear": 1930,
