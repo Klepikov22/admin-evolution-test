@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v9 · карта + точный экспорт</div>
+      <div class="eyebrow">v10 · статический экспорт</div>
       <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
 
@@ -133,12 +133,12 @@
       <input id="printGridLabelSize" type="range" min="8" max="18" step="1" value="11">
 
       <button id="fitPrintExtentBtn" type="button">Подогнать экспорт к слою / выборке</button>
-      <button id="browserPrintBtn" type="button">PDF / печать точным снимком</button>
-      <button id="pngExportBtn" type="button">Экспорт PNG точным снимком</button>
+      <button id="browserPrintBtn" type="button">PDF / печать статическим снимком</button>
+      <button id="pngExportBtn" type="button">Экспорт PNG статическим снимком</button>
       <button id="exitPrintBtn" type="button" class="secondaryAction">Вернуться к дашборду</button>
 
       <p class="printNote">
-        Экспорт теперь делается как точный снимок текущего листа предпросмотра. Поэтому PNG и PDF должны совпадать с тем, что видно в режиме компоновки.
+        Перед экспортом карта перерисовывается в статический canvas по текущим границам Leaflet-предпросмотра. Это убирает расхождение экстента между предпросмотром, PNG и PDF.
       </p>
     </aside>
 
@@ -182,6 +182,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>

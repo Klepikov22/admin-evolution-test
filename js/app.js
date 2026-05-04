@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '9.0-exact-print-snapshot';
+const VERSION = '10.0-static-map-export';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -238,30 +238,307 @@ function exitPrintMode(){
   dom.printWorkspace.classList.add('hidden'); document.body.classList.remove('print-mode'); state.print.active=false; setTimeout(()=>{state.map.invalidateSize(false); fitCurrentLayer(false);},160);
 }
 
+
+function asDashArray(value){
+  if(!value) return [];
+  return String(value).split(/[,\s]+/).map(Number).filter(Number.isFinite);
+}
+
+function cssColor(c, fallback='transparent'){
+  if(!c || c === 'transparent') return fallback;
+  return c;
+}
+
+function pathGeometry(ctx, geometry){
+  if(!geometry) return false;
+  const type = geometry.type;
+  const coords = geometry.coordinates;
+  let drew = false;
+
+  const moveLine = (line) => {
+    if(!line || line.length < 2) return;
+    line.forEach((xy, i) => {
+      const pt = state.map.latLngToContainerPoint([xy[1], xy[0]]);
+      if(i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+      drew = true;
+    });
+  };
+
+  if(type === 'Polygon'){
+    (coords || []).forEach(ring => {
+      moveLine(ring);
+      ctx.closePath();
+    });
+  } else if(type === 'MultiPolygon'){
+    (coords || []).forEach(poly => (poly || []).forEach(ring => {
+      moveLine(ring);
+      ctx.closePath();
+    }));
+  } else if(type === 'LineString'){
+    moveLine(coords);
+  } else if(type === 'MultiLineString'){
+    (coords || []).forEach(moveLine);
+  }
+
+  return drew;
+}
+
+function drawPolygonOrLineFeature(ctx, feature, style){
+  const geom = feature.geometry || {};
+  const type = geom.type || '';
+  const isPoly = /Polygon/.test(type);
+  const isLine = /LineString/.test(type);
+  if(!isPoly && !isLine) return;
+
+  ctx.save();
+  ctx.beginPath();
+  const drew = pathGeometry(ctx, geom);
+  if(!drew){ ctx.restore(); return; }
+
+  const fillOpacity = Number(style.fillOpacity ?? 0);
+  const strokeOpacity = Number(style.opacity ?? 1);
+  const weight = Number(style.weight ?? 1);
+
+  if(isPoly && fillOpacity > 0 && style.fillColor && style.fillColor !== 'transparent'){
+    ctx.globalAlpha = fillOpacity;
+    ctx.fillStyle = style.fillColor;
+    ctx.fill('evenodd');
+  }
+
+  if(weight > 0 && strokeOpacity > 0 && style.color && style.color !== 'transparent'){
+    ctx.globalAlpha = strokeOpacity;
+    ctx.strokeStyle = style.color;
+    ctx.lineWidth = weight;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.setLineDash(asDashArray(style.dashArray));
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawPointFeature(ctx, feature, style){
+  const geom = feature.geometry || {};
+  if(geom.type !== 'Point') return;
+  const [lon,lat] = geom.coordinates || [];
+  if(!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+  const pt = state.map.latLngToContainerPoint([lat, lon]);
+  const r = Number(style.radius || 4);
+  ctx.save();
+  ctx.globalAlpha = Number(style.opacity ?? 1);
+  ctx.beginPath();
+  ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = cssColor(style.fillColor, '#999');
+  ctx.globalAlpha = Number(style.fillOpacity ?? 1);
+  ctx.fill();
+  if(Number(style.weight || 0) > 0){
+    ctx.globalAlpha = Number(style.opacity ?? 1);
+    ctx.strokeStyle = cssColor(style.color, '#333');
+    ctx.lineWidth = Number(style.weight || 1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawGeoJsonOnCanvas(ctx, geojson, styleFn, pointStyleFn){
+  (geojson?.features || []).forEach(feature => {
+    const type = feature.geometry?.type || '';
+    if(/Point/.test(type)) drawPointFeature(ctx, feature, pointStyleFn ? pointStyleFn(feature) : pointStyle(feature,false));
+    else drawPolygonOrLineFeature(ctx, feature, styleFn(feature));
+  });
+}
+
+function drawHatchStatic(ctx, feature, color){
+  const geom = feature.geometry || {};
+  if(!/Polygon/.test(geom.type || '')) return;
+
+  ctx.save();
+  ctx.beginPath();
+  const drew = pathGeometry(ctx, geom);
+  if(!drew){ ctx.restore(); return; }
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const visit = (arr) => {
+    if(!Array.isArray(arr)) return;
+    if(typeof arr[0] === 'number'){
+      const pt = state.map.latLngToContainerPoint([arr[1], arr[0]]);
+      minX = Math.min(minX, pt.x); minY = Math.min(minY, pt.y);
+      maxX = Math.max(maxX, pt.x); maxY = Math.max(maxY, pt.y);
+    } else {
+      arr.forEach(visit);
+    }
+  };
+  visit(geom.coordinates);
+  if(!Number.isFinite(minX)){ ctx.restore(); return; }
+
+  ctx.clip('evenodd');
+  ctx.globalAlpha = 0.46;
+  ctx.strokeStyle = color || '#777';
+  ctx.lineWidth = 1.15;
+  ctx.lineCap = 'round';
+
+  const spacing = 9;
+  const start = Math.floor((minX - maxY - 80) / spacing) * spacing;
+  const end = Math.ceil((maxX - minY + 80) / spacing) * spacing;
+  for(let d=start; d<=end; d+=spacing){
+    ctx.beginPath();
+    ctx.moveTo(d + minY - 40, minY - 40);
+    ctx.lineTo(d + maxY + 40, maxY + 40);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawStaticGraticule(ctx){
+  if(!dom.showPrintGrid?.checked) return;
+  const b = state.map.getBounds();
+  const west = b.getWest(), east = b.getEast(), south = b.getSouth(), north = b.getNorth();
+  const step = Math.max(.5, degreeStep(Math.max(Math.abs(east-west), Math.abs(north-south))));
+  const lon0 = Math.ceil(west / step) * step;
+  const lat0 = Math.ceil(south / step) * step;
+
+  ctx.save();
+  ctx.strokeStyle = '#475569';
+  ctx.globalAlpha = 0.34;
+  ctx.lineWidth = 0.7;
+  ctx.setLineDash([2,5]);
+
+  for(let lon=lon0; lon<=east+.0001; lon+=step){
+    ctx.beginPath();
+    for(let i=0;i<=80;i++){
+      const lat = south + (north-south)*i/80;
+      const pt = state.map.latLngToContainerPoint([lat, lon]);
+      if(i===0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.stroke();
+  }
+
+  for(let lat=lat0; lat<=north+.0001; lat+=step){
+    ctx.beginPath();
+    for(let i=0;i<=100;i++){
+      const lon = west + (east-west)*i/100;
+      const pt = state.map.latLngToContainerPoint([lat, lon]);
+      if(i===0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+async function buildStaticMapCanvas(scale=2){
+  const field = dom.printMapField;
+  const width = Math.max(1, Math.round(field.clientWidth));
+  const height = Math.max(1, Math.round(field.clientHeight));
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'staticMapExportCanvas';
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = '#edf2ee';
+  ctx.fillRect(0,0,width,height);
+
+  const h = state.manifest.hydro || {};
+  const [water, rivers] = await Promise.all([
+    dom.showWater?.checked && h.water ? loadJson(h.water) : Promise.resolve(null),
+    dom.showRivers?.checked && h.rivers ? loadJson(h.rivers) : Promise.resolve(null)
+  ]);
+
+  if(water){
+    drawGeoJsonOnCanvas(ctx, water, () => ({color:'transparent', weight:0, opacity:0, fillColor:'#a9d4e5', fillOpacity:1}));
+  }
+
+  if(rivers){
+    drawGeoJsonOnCanvas(ctx, rivers, f => {
+      const sw = Number(f.properties?.strokeweig);
+      return {color:'#6aaec7', weight:Number.isFinite(sw) ? Math.max(.45, Math.min(1.25, sw*.7)) : .65, opacity:.9, fillOpacity:0};
+    });
+  }
+
+  if(dom.showPrevious?.checked){
+    const i = currentIndex();
+    if(i > 0){
+      const prevMeta = state.filtered[i-1];
+      const prev = await loadJson(prevMeta.file);
+      drawGeoJsonOnCanvas(ctx, prev, f => featureStyle(f,true), f => pointStyle(f,true));
+    }
+  }
+
+  if(state.currentJson){
+    drawGeoJsonOnCanvas(ctx, state.currentJson, f => featureStyle(f,false), f => pointStyle(f,false));
+    if(dom.showHatch?.checked){
+      (state.currentJson.features || [])
+        .filter(f => isUncertain(f) && !isPointFeature(f))
+        .forEach(f => drawHatchStatic(ctx, f, hatchColor(f)));
+    }
+  }
+
+  drawStaticGraticule(ctx);
+
+  return canvas;
+}
+
 async function renderPrintCanvas(scale=2){
   if(!window.html2canvas){throw new Error('html2canvas не загрузился');}
   updatePrintLayoutElements();
-  await new Promise(r=>setTimeout(r,180));
-  return html2canvas(dom.printPage,{backgroundColor:'#ffffff',scale,useCORS:true,logging:false});
+  await new Promise(r=>setTimeout(r,160));
+
+  const staticCanvas = await buildStaticMapCanvas(scale);
+  dom.printMapField.appendChild(staticCanvas);
+  dom.printMapSlot.classList.add('exportHiddenMap');
+
+  try{
+    await new Promise(r=>setTimeout(r,80));
+    return await html2canvas(dom.printPage, {
+      backgroundColor:'#ffffff',
+      scale,
+      useCORS:true,
+      logging:false,
+      windowWidth: document.documentElement.clientWidth,
+      windowHeight: document.documentElement.clientHeight,
+      scrollX: 0,
+      scrollY: 0
+    });
+  } finally {
+    dom.printMapSlot.classList.remove('exportHiddenMap');
+    staticCanvas.remove();
+  }
 }
+
 async function exportPrintPng(){
-  const old=setStatus; setStatus('Подготовка PNG: снимаю текущий лист предпросмотра…');
-  const canvas=await renderPrintCanvas(2);
-  const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=`admin-map-${state.currentMeta?.timeLabel||'layout'}.png`.replace(/\s+/g,'_'); a.click();
-  setStatus(`PNG готов: <b>${esc(state.currentMeta?.timeLabel||'—')}</b>`);
+  setStatus('Подготовка PNG: рисую статический снимок карты по текущему предпросмотру…');
+  const canvas = await renderPrintCanvas(2);
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `admin-map-${state.currentMeta?.timeLabel || 'layout'}.png`.replace(/\s+/g,'_');
+  a.click();
+  setStatus(`PNG готов: <b>${esc(state.currentMeta?.timeLabel || '—')}</b>`);
 }
+
 async function printExactSnapshot(){
-  setStatus('Подготовка PDF/печати: снимаю текущий лист предпросмотра…');
-  const canvas=await renderPrintCanvas(2);
-  const dataUrl=canvas.toDataURL('image/png');
-  const orient=dom.paperOrientation.value==='portrait'?'portrait':'landscape';
-  const format=dom.paperFormat.value.toUpperCase();
-  const w=canvas.width, h=canvas.height;
-  const win=window.open('', '_blank');
-  if(!win){alert('Браузер заблокировал окно печати. Разреши всплывающие окна или используй экспорт PNG.');return;}
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Печать карты</title><style>@page{size:${format} ${orient};margin:0}html,body{margin:0;background:#fff;width:100%;height:100%}body{display:grid;place-items:center}img{display:block;max-width:100vw;max-height:100vh;width:auto;height:auto}</style></head><body><img src="${dataUrl}" width="${w}" height="${h}" onload="setTimeout(()=>{window.focus();window.print();},250)"></body></html>`);
+  setStatus('Подготовка PDF/печати: рисую статический снимок карты по текущему предпросмотру…');
+  const canvas = await renderPrintCanvas(2);
+  const dataUrl = canvas.toDataURL('image/png');
+  const orient = dom.paperOrientation.value === 'portrait' ? 'portrait' : 'landscape';
+  const format = dom.paperFormat.value.toUpperCase();
+  const w = canvas.width, h = canvas.height;
+  const win = window.open('', '_blank');
+  if(!win){
+    alert('Браузер заблокировал окно печати. Разреши всплывающие окна или используй экспорт PNG.');
+    return;
+  }
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Печать карты</title><style>@page{size:${format} ${orient};margin:0}html,body{margin:0;background:#fff;width:100%;height:100%}body{display:grid;place-items:center}img{display:block;width:100vw;height:100vh;object-fit:contain}</style></head><body><img src="${dataUrl}" width="${w}" height="${h}" onload="setTimeout(()=>{window.focus();window.print();},250)"></body></html>`);
   win.document.close();
-  setStatus(`PDF/печать: открыт точный снимок предпросмотра.`);
+  setStatus('PDF/печать: открыт статический снимок, совпадающий с предпросмотром.');
 }
 
 function bind(){
