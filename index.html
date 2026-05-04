@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Историческая административная сетка Западной Сибири</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
   <div id="app">
     <div id="map"></div>
 
     <aside id="leftPanel" class="panel">
-      <div class="eyebrow">v12 · lambert print fit</div>
+      <div class="eyebrow">v13 · фильтры + выборка</div>
       <h1>Эволюция административной сетки</h1>
       <div id="status" class="status">Загрузка…</div>
 
@@ -81,6 +81,37 @@
       <h2>Поля</h2>
       <section id="schemaInfo" class="box scrollBox">—</section>
 
+      <h2>Фильтры объектов</h2>
+      <section class="box filterBox">
+        <label>Административная иерархия</label>
+        <select id="hierarchyFilter">
+          <option value="all">Все уровни / все значения</option>
+        </select>
+        <div class="filterGrid">
+          <div>
+            <label>Население от</label>
+            <input id="populationMin" class="search" type="number" min="0" placeholder="0">
+          </div>
+          <div>
+            <label>Население до</label>
+            <input id="populationMax" class="search" type="number" min="0" placeholder="∞">
+          </div>
+        </div>
+        <label>Сортировка таблицы</label>
+        <select id="objectSortSelect">
+          <option value="default">По исходному порядку</option>
+          <option value="name_asc">По названию А–Я</option>
+          <option value="population_desc">По населению ↓</option>
+          <option value="population_asc">По населению ↑</option>
+          <option value="hierarchy_asc">По иерархии / уровню</option>
+          <option value="top_atd_asc">По верхнему АТД</option>
+        </select>
+        <div class="buttonRow compactButtons">
+          <button id="applyObjectFiltersBtn" type="button">Применить</button>
+          <button id="resetObjectFiltersBtn" type="button">Сбросить</button>
+        </div>
+      </section>
+
       <h2>Объекты</h2>
       <input id="tableSearch" class="search" placeholder="Фильтр по атрибутам…">
       <section id="tableBox" class="box scrollBox">—</section>
@@ -133,12 +164,13 @@
       <input id="printGridLabelSize" type="range" min="8" max="18" step="1" value="11">
 
       <button id="fitPrintExtentBtn" type="button">Подогнать экспорт к слою / выборке</button>
+      <button id="clearSelectionBtn" type="button">Убрать выборку / выделение</button>
       <button id="browserPrintBtn" type="button">PDF / печать статическим снимком</button>
       <button id="pngExportBtn" type="button">Экспорт PNG статическим снимком</button>
       <button id="exitPrintBtn" type="button" class="secondaryAction">Вернуться к дашборду</button>
 
       <p class="printNote">
-        В режиме компоновки карта и подбор рамки теперь опираются на равноугольную коническую проекцию Ламберта для Западной Сибири. Это должно лучше удерживать северную часть в пределах картографического поля и аккуратнее подгонять форму рамки под слой или выборку.
+        Добавлены сброс выборки в экспорте, более дальний минимальный зум и фильтры объектов по населению и административной иерархии. В режиме компоновки рамка продолжает подгоняться под слой или активную выборку.
       </p>
     </aside>
 
@@ -184,6 +216,6 @@
   <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
   <script src="https://unpkg.com/proj4leaflet@1.0.2/src/proj4leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js?v=12"></script>
+  <script src="js/app.js?v=13"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
   "title": "Историческая административная сетка Западной Сибири",
-  "version": "9.0-print-exact-snapshot",
+  "version": "13.0-filters-clear-selection",
   "projectBounds": [
     55.17824915611141,
     49.333494966359574,
@@ -8,7 +8,7 @@
     77.7191495517343
   ],
   "projectBoundsSource": "Тобольская губерния 1798 + 200 км запад/восток",
-  "minZoom": 5,
+  "minZoom": 4,
   "defaultLayerId": "layer_018",
   "hydro": {
     "water": "data/base/water.geojson",

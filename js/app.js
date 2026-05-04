@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '12.0-lambert-print-fit';
+const VERSION = '13.0-filters-clear-selection';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -12,7 +12,7 @@ const LAMBERT_CRS = (window.L && window.L.Proj) ? new L.Proj.CRS('CUSTOM:LAMBERT
 
 const state = {
   manifest:null, map:null, layers:[], filtered:[],
-  currentId:null, currentMeta:null, currentJson:null,
+  currentId:null, currentMeta:null, currentJson:null, visibleFeatures:[],
   currentLayer:null, previousLayer:null, hatchLayer:null, waterLayer:null, riverLayer:null,
   cache:new Map(), colors:new Map(), selectedLayer:null, selectedFeature:null,
   graticuleLayer:null,
@@ -25,7 +25,8 @@ const dom = {
   slider:$('timeSlider'), ticks:$('timelineTicks'), activeLayerCard:$('activeLayerCard'), radios:$('radioList'),
   prev:$('prevBtn'), next:$('nextBtn'), fitLayer:$('fitLayerBtn'), fitProject:$('fitProjectBtn'), download:$('downloadBtn'),
   layerInfo:$('layerInfo'), featureInfo:$('featureInfo'), schema:$('schemaInfo'), table:$('tableBox'), search:$('tableSearch'), legend:$('legendBox'),
-  exportMode:$('exportModeBtn'), printWorkspace:$('printWorkspace'), exitPrint:$('exitPrintBtn'), fitPrintExtent:$('fitPrintExtentBtn'),
+  hierarchyFilter:$('hierarchyFilter'), populationMin:$('populationMin'), populationMax:$('populationMax'), objectSort:$('objectSortSelect'), applyObjectFilters:$('applyObjectFiltersBtn'), resetObjectFilters:$('resetObjectFiltersBtn'),
+  exportMode:$('exportModeBtn'), printWorkspace:$('printWorkspace'), exitPrint:$('exitPrintBtn'), fitPrintExtent:$('fitPrintExtentBtn'), clearSelection:$('clearSelectionBtn'),
   printMapFrame:$('printMapFrame'), printMapField:$('printMapField'), printMapSlot:$('printMapSlot'), printGridLabels:$('printGridLabels'),
   printTitle:$('printTitleInput'), printTitleText:$('printTitleText'), paperFormat:$('paperFormatSelect'), paperOrientation:$('paperOrientationSelect'), printDpi:$('printDpiSelect'),
   showPrintLegend:$('showPrintLegend'), showPrintScale:$('showPrintScale'), showPrintNorth:$('showPrintNorth'), showPrintGrid:$('showPrintGrid'), showPrintGridLabels:$('showPrintGridLabels'), showPrintSource:$('showPrintSource'),
@@ -59,12 +60,13 @@ function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
 
 function colorFor(v){const k=cleanText(v)||'Не указано'; if(!state.colors.has(k))state.colors.set(k,palette[state.colors.size%palette.length]); return state.colors.get(k);}
 async function loadJson(path){if(state.cache.has(path))return state.cache.get(path); const r=await fetch(`${path}?v=${VERSION}`,{cache:'no-store'}); if(!r.ok)throw new Error(`${r.status} ${path}`); const j=await r.json(); state.cache.set(path,j); return j;}
+function mapMinZoom(){return Math.max(1, Number(state.manifest?.minZoom || 5));}
 
 function initMap(){
   const b=boundsFromBbox(state.manifest.projectBounds);
   state.map=L.map('map',{
     crs:LAMBERT_CRS || L.CRS.EPSG3857,
-    minZoom:state.manifest.minZoom||5,zoomSnap:.25,zoomDelta:.5,wheelPxPerZoomLevel:220,
+    minZoom:mapMinZoom(),zoomSnap:.25,zoomDelta:.5,wheelPxPerZoomLevel:220,
     scrollWheelZoom:'center',doubleClickZoom:'center',touchZoom:'center',zoomAnimation:false,fadeAnimation:false,
     markerZoomAnimation:false,inertia:false,preferCanvas:false
   });
@@ -74,17 +76,66 @@ function initMap(){
   state.map.createPane('adminPane'); state.map.getPane('adminPane').style.zIndex=420;
   state.map.createPane('hatchPane'); state.map.getPane('hatchPane').style.zIndex=430;
   state.map.createPane('gridPane'); state.map.getPane('gridPane').style.zIndex=560;
-  state.map.setView(b.getCenter(), state.manifest.minZoom||5, {animate:false});
+  state.map.setView(b.getCenter(), mapMinZoom(), {animate:false});
   L.control.scale({imperial:false}).addTo(state.map);
 }
 
-function projectFit(){const b=boundsFromBbox(state.manifest.projectBounds); state.map.setView(b.getCenter(), state.manifest.minZoom||5, {animate:false}); if(state.print.active)setTimeout(updatePrintLayoutElements,80);}
+function projectFit(){const b=boundsFromBbox(state.manifest.projectBounds); state.map.setView(b.getCenter(), mapMinZoom(), {animate:false}); if(state.print.active)setTimeout(updatePrintLayoutElements,80);}
 
 function getName(f){const p=f.properties||{}; return p._display_name||p._name||p.name||p.Name||p.NAME||p.name_ru||p.name_rus||'объект';}
 function getTopAtd(f){return (f.properties||{})._display_top_atd||'Не указано';}
 function getMidAtd(f){return (f.properties||{})._display_mid_atd||'';}
 function getMapAtd(f){return (f.properties||{})._display_map_atd||getMidAtd(f)||getTopAtd(f)||'Не указано';}
 function getType(f){return (f.properties||{})._display_unit_type||(f.properties||{})._unit_type||(f.properties||{}).featurecla||'Не указано';}
+
+function getHierarchyValue(f){const p=f.properties||{}; return p._display_hierarchy||p._display_unit_type||p._display_low_atd||getType(f)||'Не указано';}
+function getPopulationValue(f){
+  const p=f.properties||{};
+  const keys=['_display_population','population','Population','POP','pop','Население','население'];
+  for(const k of keys){
+    const raw=p[k];
+    if(raw===null||raw===undefined||raw==='')continue;
+    const n=Number(String(raw).replace(/[^0-9.,-]/g,'').replace(',','.'));
+    if(Number.isFinite(n))return n;
+  }
+  return null;
+}
+function updateHierarchyFilterOptions(feats){
+  if(!dom.hierarchyFilter)return;
+  const prev=dom.hierarchyFilter.value||'all';
+  const vals=[...new Set((feats||[]).map(getHierarchyValue).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
+  dom.hierarchyFilter.innerHTML='<option value="all">Все уровни / все значения</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  dom.hierarchyFilter.value=vals.includes(prev)?prev:'all';
+}
+function passesObjectFilters(f){
+  const hv=dom.hierarchyFilter?.value||'all';
+  if(hv!=='all' && getHierarchyValue(f)!==hv)return false;
+  const pop=getPopulationValue(f);
+  const min=Number(dom.populationMin?.value);
+  const max=Number(dom.populationMax?.value);
+  if(Number.isFinite(min) && dom.populationMin?.value!=='' && (pop===null||pop<min))return false;
+  if(Number.isFinite(max) && dom.populationMax?.value!=='' && (pop===null||pop>max))return false;
+  return true;
+}
+function sortObjectFeatures(feats){
+  const mode=dom.objectSort?.value||'default';
+  const arr=[...(feats||[])];
+  const byText=(fn)=>(a,b)=>String(fn(a)||'').localeCompare(String(fn(b)||''),'ru');
+  const byPop=(dir)=>(a,b)=>{
+    const av=getPopulationValue(a), bv=getPopulationValue(b);
+    const aa=av===null ? (dir>0?Infinity:-Infinity) : av;
+    const bb=bv===null ? (dir>0?Infinity:-Infinity) : bv;
+    return (aa-bb)*dir;
+  };
+  if(mode==='name_asc')arr.sort(byText(getName));
+  else if(mode==='population_desc')arr.sort(byPop(-1));
+  else if(mode==='population_asc')arr.sort(byPop(1));
+  else if(mode==='hierarchy_asc')arr.sort(byText(getHierarchyValue));
+  else if(mode==='top_atd_asc')arr.sort(byText(getTopAtd));
+  return arr;
+}
+function getFilteredObjectFeatures(feats){return (feats||[]).filter(passesObjectFilters);}
+function filteredFeatureCollection(){return {type:'FeatureCollection',features:state.visibleFeatures||[]};}
 
 function isUncertain(f){
   const p=f.properties||{};
@@ -156,12 +207,44 @@ async function selectLayer(id){
   clearCurrent(); setStatus(`Загрузка: <b>${esc(displayTitle(state.currentMeta))}</b>…`);
   dom.layerSelect.value=id; renderTimeline(); await drawPrevious();
   const gj=await loadJson(state.currentMeta.file); state.currentJson=gj;
-  state.currentLayer=L.geoJSON(gj,{pane:'adminPane',style:f=>featureStyle(f,false),pointToLayer:(f,ll)=>L.circleMarker(ll,pointStyle(f,false)),onEachFeature:onEach(false)}).addTo(state.map);
-  if(dom.showHatch.checked){const h=(gj.features||[]).filter(f=>isUncertain(f)&&!isPointFeature(f)); if(h.length)state.hatchLayer=L.hatchCanvasLayer(h,hatchColor,{spacing:9,lineWidth:1.15,opacity:.46}).addTo(state.map);}
-  renderPanels(gj);
-  if(state.print.active)fitPrintExtent(); else fitCurrentLayer(false);
-  setStatus(`Активно: <b>${esc(state.currentMeta.timeLabel)}</b> · ${esc(displayTitle(state.currentMeta))} · объектов: ${fmt.format(state.currentMeta.featureCount)}`);
+  updateHierarchyFilterOptions(gj.features||[]);
+  drawFilteredCurrentLayer(false);
+  setStatus(`Активно: <b>${esc(state.currentMeta.timeLabel)}</b> · ${esc(displayTitle(state.currentMeta))} · объектов в фильтре: ${fmt.format(state.visibleFeatures.length)} / ${fmt.format((gj.features||[]).length)}`);
   updatePrintLayoutElements();
+}
+
+function drawFilteredCurrentLayer(fit=true){
+  if(!state.currentJson)return;
+  ['currentLayer','hatchLayer'].forEach(k=>{if(state[k]){state.map.removeLayer(state[k]);state[k]=null;}});
+  state.selectedLayer=null;
+  state.selectedFeature=null;
+  state.visibleFeatures=getFilteredObjectFeatures(state.currentJson.features||[]);
+  const display={type:'FeatureCollection',features:state.visibleFeatures};
+  state.currentLayer=L.geoJSON(display,{pane:'adminPane',style:f=>featureStyle(f,false),pointToLayer:(f,ll)=>L.circleMarker(ll,pointStyle(f,false)),onEachFeature:onEach(false)}).addTo(state.map);
+  if(dom.showHatch.checked){const h=state.visibleFeatures.filter(f=>isUncertain(f)&&!isPointFeature(f)); if(h.length)state.hatchLayer=L.hatchCanvasLayer(h,hatchColor,{spacing:9,lineWidth:1.15,opacity:.46}).addTo(state.map);}
+  renderPanels(display);
+  if(fit){if(state.print.active)fitPrintExtent(); else fitCurrentLayer(false);} else {if(state.print.active)fitPrintExtent(); else fitCurrentLayer(false);}
+}
+
+function applyObjectFilters(){
+  if(!state.currentJson)return;
+  drawFilteredCurrentLayer(true);
+  setStatus(`Фильтр применён: <b>${fmt.format(state.visibleFeatures.length)}</b> объектов из ${fmt.format((state.currentJson.features||[]).length)}.`);
+}
+function resetObjectFilters(){
+  if(dom.hierarchyFilter)dom.hierarchyFilter.value='all';
+  if(dom.populationMin)dom.populationMin.value='';
+  if(dom.populationMax)dom.populationMax.value='';
+  if(dom.objectSort)dom.objectSort.value='default';
+  if(dom.search)dom.search.value='';
+  applyObjectFilters();
+}
+function clearSelection(){
+  if(state.selectedLayer&&state.selectedLayer.setStyle&&state.selectedFeature)state.selectedLayer.setStyle(featureStyle(state.selectedFeature,false));
+  state.selectedLayer=null;
+  state.selectedFeature=null;
+  if(dom.featureInfo)dom.featureInfo.innerHTML='Выборка снята. Экспорт будет подогнан по текущему отфильтрованному слою.';
+  if(state.print.active)fitPrintExtent();
 }
 
 function layerBoundsForFeature(f){
@@ -221,7 +304,7 @@ function renderLegend(feats){
 }
 function schemaStats(feats){const stats=new Map(); feats.forEach(f=>Object.entries(f.properties||{}).forEach(([k,v])=>{if(!stats.has(k))stats.set(k,{n:0,t:new Set(),s:[]}); const st=stats.get(k); if(v!==null&&v!==undefined&&v!==''){st.n++; st.t.add(Array.isArray(v)?'array':typeof v); const sv=String(v); if(st.s.length<2&&!st.s.includes(sv))st.s.push(compact(sv,60));}})); return [...stats.entries()].sort((a,b)=>((a[0].startsWith('_display')?'0':'1')+a[0]).localeCompare((b[0].startsWith('_display')?'0':'1')+b[0],'ru'));}
 function renderSchema(feats){dom.schema.innerHTML=`<table class="schemaTable"><thead><tr><th>Поле</th><th>Тип</th><th>Заполнено</th><th>Примеры</th></tr></thead><tbody>${schemaStats(feats).map(([k,st])=>`<tr><td>${esc(labelForField(k))}<small>${esc(k)}</small></td><td>${esc([...st.t].join(', ')||'—')}</td><td>${st.n}/${feats.length}</td><td>${esc(st.s.join(' · ')||'—')}</td></tr>`).join('')}</tbody></table>`;}
-function renderTable(feats){const q=(dom.search.value||'').toLowerCase(); const shown=feats.filter(f=>!q||JSON.stringify(f.properties||{}).toLowerCase().includes(q)).slice(0,250); dom.table.innerHTML=`<table class="attrTable"><thead><tr><th>#</th><th>Объект</th><th>На карте</th><th>Средний уровень</th><th>Тип</th><th>Статус</th></tr></thead><tbody>${shown.map((f,i)=>`<tr data-i="${i}"><td>${i+1}</td><td>${esc(compact(getName(f),70))}</td><td>${esc(compact(getMapAtd(f),70))}</td><td>${esc(compact(getMidAtd(f),60))}</td><td>${esc(compact(getType(f),45))}</td><td>${esc(isUncertain(f)?((f.properties||{})._uncertain_label||'да'):'—')}</td></tr>`).join('')}</tbody></table><div class="muted tableHint">Показано ${shown.length} из ${feats.length}.</div>`; dom.table.querySelectorAll('tr[data-i]').forEach(tr=>tr.addEventListener('click',()=>renderFeature(shown[Number(tr.dataset.i)])));}
+function renderTable(feats){const q=(dom.search.value||'').toLowerCase(); const filtered=sortObjectFeatures((feats||[]).filter(f=>!q||JSON.stringify(f.properties||{}).toLowerCase().includes(q))); const shown=filtered.slice(0,250); dom.table.innerHTML=`<table class="attrTable"><thead><tr><th>#</th><th>Объект</th><th>На карте</th><th>Иерархия</th><th>Население</th><th>Статус</th></tr></thead><tbody>${shown.map((f,i)=>`<tr data-i="${i}"><td>${i+1}</td><td>${esc(compact(getName(f),70))}</td><td>${esc(compact(getMapAtd(f),70))}</td><td>${esc(compact(getHierarchyValue(f),60))}</td><td>${esc(getPopulationValue(f)===null?'—':fmt.format(getPopulationValue(f)))}</td><td>${esc(isUncertain(f)?((f.properties||{})._uncertain_label||'да'):'—')}</td></tr>`).join('')}</tbody></table><div class="muted tableHint">Показано ${shown.length} из ${filtered.length} после фильтров; всего в слое ${state.currentJson?(state.currentJson.features||[]).length:feats.length}.</div>`; dom.table.querySelectorAll('tr[data-i]').forEach(tr=>tr.addEventListener('click',()=>renderFeature(shown[Number(tr.dataset.i)])));}
 
 function applyCategory(){const cat=dom.category.value; state.filtered=state.layers.filter(l=>cat==='all'||l.category===cat); if(!state.filtered.length)state.filtered=[...state.layers]; state.filtered.sort((a,b)=>(a.year-b.year)||(a.startYear-b.startYear)||displayTitle(a).localeCompare(displayTitle(b),'ru')); if(!state.currentId||!state.filtered.some(l=>l.id===state.currentId))state.currentId=(state.filtered.find(l=>l.id===state.manifest.defaultLayerId)||state.filtered[state.filtered.length-1])?.id; renderLayerSelect(); renderTimeline();}
 function renderLayerSelect(){dom.layerSelect.innerHTML=''; state.filtered.forEach(m=>{const o=document.createElement('option'); o.value=m.id; o.textContent=`${m.timeLabel} — ${displayTitle(m)}`; if(m.id===state.currentId)o.selected=true; dom.layerSelect.appendChild(o);});}
@@ -247,7 +330,7 @@ function buildGraticule(){
 function metersPerPixelAtCenter(){const c=state.map.getCenter(), p1=state.map.latLngToContainerPoint(c), p2=L.point(p1.x+100,p1.y), ll2=state.map.containerPointToLatLng(p2); return c.distanceTo(ll2)/100;}
 function niceDistance(m){const pow=Math.pow(10,Math.floor(Math.log10(Math.max(1,m)))), n=m/pow; if(n<2)return pow; if(n<5)return 2*pow; return 5*pow;}
 function updateScaleBar(){if(!dom.printScale||!state.print.active)return; const targetPx=Math.max(120,Math.round(dom.printMapField.clientWidth*.16)); const mpp=metersPerPixelAtCenter(), meters=niceDistance(mpp*targetPx), width=Math.max(40,Math.round(meters/mpp)); dom.printScale.innerHTML=`<div class="scaleBarLine" style="width:${width}px"></div><b>${meters>=1000?(meters/1000)+' км':meters+' м'}</b>`;}
-function getCurrentSummary(){const feats=state.currentJson?.features||[]; return {count:feats.length, topCount:new Set(feats.map(getTopAtd).filter(Boolean)).size, midCount:new Set(feats.map(getMidAtd).filter(Boolean)).size, uncertain:feats.filter(isUncertain).length, selected:state.selectedFeature?getName(state.selectedFeature):'нет'};}
+function getCurrentSummary(){const feats=Array.isArray(state.visibleFeatures)?state.visibleFeatures:(state.currentJson?.features||[]); return {count:feats.length, topCount:new Set(feats.map(getTopAtd).filter(Boolean)).size, midCount:new Set(feats.map(getMidAtd).filter(Boolean)).size, uncertain:feats.filter(isUncertain).length, selected:state.selectedFeature?getName(state.selectedFeature):'нет'};}
 function applyPaperSettings(){dom.printPage.dataset.format=dom.paperFormat?.value||'a3'; dom.printPage.dataset.orientation=dom.paperOrientation?.value||'landscape'; if(dom.printTitleText)dom.printTitleText.textContent=dom.printTitle?.value||'Карта'; if(dom.printGridLabelSizeValue)dom.printGridLabelSizeValue.textContent=dom.printGridLabelSize?.value||'11';}
 function updatePrintLayoutElements(){
   if(!state.print.active)return; applyPaperSettings();
@@ -509,9 +592,11 @@ async function buildStaticMapCanvas(scale=2){
   }
 
   if(state.currentJson){
-    drawGeoJsonOnCanvas(ctx, state.currentJson, f => featureStyle(f,false), f => pointStyle(f,false));
+    const exportFeatures=state.visibleFeatures&&state.visibleFeatures.length?state.visibleFeatures:getFilteredObjectFeatures(state.currentJson.features||[]);
+    const exportJson={type:'FeatureCollection',features:exportFeatures};
+    drawGeoJsonOnCanvas(ctx, exportJson, f => featureStyle(f,false), f => pointStyle(f,false));
     if(dom.showHatch?.checked){
-      (state.currentJson.features || [])
+      exportFeatures
         .filter(f => isUncertain(f) && !isPointFeature(f))
         .forEach(f => drawHatchStatic(ctx, f, hatchColor(f)));
     }
@@ -587,8 +672,12 @@ function bind(){
   dom.next.addEventListener('click',()=>{const i=currentIndex(); if(i<state.filtered.length-1)selectLayer(state.filtered[i+1].id);});
   dom.fitLayer.addEventListener('click',()=>fitCurrentLayer(true)); dom.fitProject.addEventListener('click',projectFit);
   dom.download.addEventListener('click',()=>{if(!state.currentMeta)return; const a=document.createElement('a'); a.href=state.currentMeta.file; a.download=state.currentMeta.file.split('/').pop(); a.click();});
-  dom.search.addEventListener('input',()=>state.currentJson&&renderTable(state.currentJson.features||[]));
-  dom.exportMode.addEventListener('click',enterPrintMode); dom.exitPrint.addEventListener('click',exitPrintMode); dom.fitPrintExtent.addEventListener('click',fitPrintExtent);
+  dom.search.addEventListener('input',()=>state.currentJson&&renderTable(state.visibleFeatures||getFilteredObjectFeatures(state.currentJson.features||[])));
+  dom.applyObjectFilters?.addEventListener('click',applyObjectFilters);
+  dom.resetObjectFilters?.addEventListener('click',resetObjectFilters);
+  [dom.hierarchyFilter,dom.populationMin,dom.populationMax].filter(Boolean).forEach(el=>el.addEventListener('change',applyObjectFilters));
+  dom.objectSort?.addEventListener('change',()=>renderTable(state.visibleFeatures||[]));
+  dom.exportMode.addEventListener('click',enterPrintMode); dom.exitPrint.addEventListener('click',exitPrintMode); dom.fitPrintExtent.addEventListener('click',fitPrintExtent); dom.clearSelection?.addEventListener('click',clearSelection);
   [dom.printTitle,dom.paperFormat,dom.paperOrientation,dom.printDpi,dom.showPrintLegend,dom.showPrintScale,dom.showPrintNorth,dom.showPrintGrid,dom.showPrintGridLabels,dom.showPrintSource,dom.printGridLabelSize].filter(Boolean).forEach(el=>el.addEventListener('input',()=>{applyPaperSettings(); if(state.print.active){setTimeout(()=>{adjustPrintMapFrame(bufferedBounds(getPrintTargetBounds(),.12)); state.map.invalidateSize(false); if(el===dom.paperFormat||el===dom.paperOrientation){fitPrintExtent();} else {updatePrintLayoutElements();}},40);}}));
   dom.browserPrint.addEventListener('click',printExactSnapshot); dom.pngExport.addEventListener('click',exportPrintPng);
   state.map.on('moveend zoomend resize',()=>{if(state.print.active)updatePrintLayoutElements();});
