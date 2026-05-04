@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '10.0-static-map-export';
+const VERSION = '11.0-adaptive-print-frame';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('ru-RU');
 
@@ -160,8 +160,10 @@ function layerBoundsForFeature(f){
 }
 function getPrintTargetBounds(){if(state.selectedFeature){const b=layerBoundsForFeature(state.selectedFeature); if(b&&b.isValid())return b;} const b=state.currentLayer?.getBounds?.(); if(b&&b.isValid())return b; return boundsFromBbox(state.manifest.projectBounds);}
 function bufferedBounds(bounds,fraction=.08){if(!bounds||!bounds.isValid())return bounds; const sw=bounds.getSouthWest(), ne=bounds.getNorthEast(); let latPad=Math.abs(ne.lat-sw.lat)*fraction, lngPad=Math.abs(ne.lng-sw.lng)*fraction; if(latPad<.18)latPad=.18; if(lngPad<.18)lngPad=.18; return L.latLngBounds([sw.lat-latPad,sw.lng-lngPad],[ne.lat+latPad,ne.lng+lngPad]);}
+function boundsAspect(bounds){if(!bounds||!bounds.isValid())return 1.6; const sw=bounds.getSouthWest(), ne=bounds.getNorthEast(); const mid=((sw.lat+ne.lat)/2)*Math.PI/180; const w=Math.max(.0001,Math.abs(ne.lng-sw.lng)*Math.max(.25,Math.cos(mid))); const h=Math.max(.0001,Math.abs(ne.lat-sw.lat)); return clamp(w/h,.45,3.2);}
+function adjustPrintMapFrame(bounds){if(!state.print.active||!dom.printMapFrame)return; const work=$('printWorkArea')||dom.printPage; const pageW=work.clientWidth||dom.printPage.clientWidth; const pageH=work.clientHeight||dom.printPage.clientHeight; if(!pageW||!pageH)return; const aspect=boundsAspect(bounds||getPrintTargetBounds()); const minTopBottom=100,minSide=60,maxSide=400; const maxW=Math.max(240,pageW-minSide*2); const maxH=Math.max(240,pageH-minTopBottom*2); let width=maxW, height=width/aspect; if(height>maxH){height=maxH;width=height*aspect;} let side=(pageW-width)/2; if(side>maxSide){width=pageW-maxSide*2; height=width/aspect; if(height>maxH){height=maxH;width=height*aspect;} side=(pageW-width)/2;} width=Math.min(width,maxW); height=Math.min(height,maxH); const left=Math.round((pageW-width)/2); const top=Math.round((pageH-height)/2); Object.assign(dom.printMapFrame.style,{left:left+'px',top:top+'px',width:Math.round(width)+'px',height:Math.round(height)+'px',right:'auto',bottom:'auto'});}
 function fitCurrentLayer(animated=true){const b=state.currentLayer?.getBounds?.(); if(b&&b.isValid()){state.map.fitBounds(bufferedBounds(b,.05),{padding:[28,28],maxZoom:7,animate:animated}); setTimeout(updatePrintLayoutElements,80);}}
-function fitPrintExtent(){const b=bufferedBounds(getPrintTargetBounds(),.10); if(b&&b.isValid()){state.map.fitBounds(b,{padding:[24,24],maxZoom:8,animate:false}); setTimeout(updatePrintLayoutElements,140);}}
+function fitPrintExtent(){const b=bufferedBounds(getPrintTargetBounds(),.10); if(b&&b.isValid()){adjustPrintMapFrame(b); setTimeout(()=>{state.map.invalidateSize(false); state.map.fitBounds(b,{padding:[18,18],maxZoom:8,animate:false}); setTimeout(updatePrintLayoutElements,140);},40);}}
 
 async function drawHydro(){
   setStatus('Загрузка гидрографии…'); const h=state.manifest.hydro; const [water,rivers]=await Promise.all([loadJson(h.water),loadJson(h.rivers)]);
@@ -231,7 +233,7 @@ function initDraggables(){if(state.print.draggablesReady)return; document.queryS
 function enterPrintMode(){
   if(state.print.active)return; state.print.originalParent=$('app'); const mapEl=$('map'); state.print.originalNext=mapEl.nextSibling;
   document.body.classList.add('print-mode'); dom.printWorkspace.classList.remove('hidden'); applyPaperSettings(); dom.printMapSlot.appendChild(mapEl); state.print.active=true; initDraggables();
-  setTimeout(()=>{state.map.invalidateSize(false); fitPrintExtent(); updatePrintLayoutElements();},160);
+  setTimeout(()=>{adjustPrintMapFrame(bufferedBounds(getPrintTargetBounds(),.10)); state.map.invalidateSize(false); fitPrintExtent(); updatePrintLayoutElements();},160);
 }
 function exitPrintMode(){
   if(!state.print.active)return; clearGraticule(); const mapEl=$('map'); if(state.print.originalNext)state.print.originalParent.insertBefore(mapEl,state.print.originalNext); else state.print.originalParent.insertBefore(mapEl,state.print.originalParent.firstChild);
@@ -554,7 +556,7 @@ function bind(){
   dom.download.addEventListener('click',()=>{if(!state.currentMeta)return; const a=document.createElement('a'); a.href=state.currentMeta.file; a.download=state.currentMeta.file.split('/').pop(); a.click();});
   dom.search.addEventListener('input',()=>state.currentJson&&renderTable(state.currentJson.features||[]));
   dom.exportMode.addEventListener('click',enterPrintMode); dom.exitPrint.addEventListener('click',exitPrintMode); dom.fitPrintExtent.addEventListener('click',fitPrintExtent);
-  [dom.printTitle,dom.paperFormat,dom.paperOrientation,dom.printDpi,dom.showPrintLegend,dom.showPrintScale,dom.showPrintNorth,dom.showPrintGrid,dom.showPrintGridLabels,dom.showPrintSource,dom.printGridLabelSize].filter(Boolean).forEach(el=>el.addEventListener('input',()=>{applyPaperSettings(); if(state.print.active){setTimeout(()=>{state.map.invalidateSize(false); updatePrintLayoutElements();},40);}}));
+  [dom.printTitle,dom.paperFormat,dom.paperOrientation,dom.printDpi,dom.showPrintLegend,dom.showPrintScale,dom.showPrintNorth,dom.showPrintGrid,dom.showPrintGridLabels,dom.showPrintSource,dom.printGridLabelSize].filter(Boolean).forEach(el=>el.addEventListener('input',()=>{applyPaperSettings(); if(state.print.active){setTimeout(()=>{adjustPrintMapFrame(bufferedBounds(getPrintTargetBounds(),.10)); state.map.invalidateSize(false); if(el===dom.paperFormat||el===dom.paperOrientation){fitPrintExtent();} else {updatePrintLayoutElements();}},40);}}));
   dom.browserPrint.addEventListener('click',printExactSnapshot); dom.pngExport.addEventListener('click',exportPrintPng);
   state.map.on('moveend zoomend resize',()=>{if(state.print.active)updatePrintLayoutElements();});
 }
